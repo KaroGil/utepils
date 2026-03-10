@@ -10,7 +10,7 @@ import {
   getBackgroundClass,
   getMeterColor,
   getConditionLabel,
-} from "./util/calculations";
+} from "../lib/calculations";
 
 export default function Page() {
   const now = new Date();
