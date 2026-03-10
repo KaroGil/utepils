@@ -110,7 +110,8 @@ export default function Page() {
 
             <div className="mt-6 space-y-4">
               <ReasonRow
-                title={`Temperatur ${weather.temperature}°C`}
+                title="Temperatur"
+                value={` ${weather.temperature}°C`}
                 description={
                   weather.temperature >= 15 && weather.temperature <= 22
                     ? "Perfekt temperatur for å sitte ute lenge"
@@ -121,7 +122,8 @@ export default function Page() {
               />
 
               <ReasonRow
-                title={`Tid på dagen ${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`}
+                title="Tid på dagen"
+                value={`${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`}
                 description={
                   hour >= 16 && hour < 22
                     ? "Prime time for utepils"
@@ -133,6 +135,7 @@ export default function Page() {
 
               <ReasonRow
                 title="Vind og nedbør"
+                value={`${weather.wind} m/s`}
                 description={
                   weather.wind < 5 && weather.precipitation === 0
                     ? "Lite vind og tørt vær trekker opp stemningen"
