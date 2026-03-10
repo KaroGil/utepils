@@ -49,7 +49,7 @@ export default function Page() {
     <main
       className={`min-h-screen bg-linear-to-br ${backgroundClass} text-slate-900`}
     >
-      <div className="mx-auto flex min-h-screen max-w-6xl items-center justify-center p-6">
+      <div className="mx-auto flex min-h-screen max-w-[1350px] items-center justify-center p-6">
         <div className="grid w-full gap-6 lg:grid-cols-[1.2fr_0.8fr]">
           <section className="rounded-4xl bg-white/70 p-8 shadow-2xl backdrop-blur-xl">
             <div className="mb-8 flex items-start justify-between gap-4">
