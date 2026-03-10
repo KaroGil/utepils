@@ -7,3 +7,12 @@ export type WeatherData = {
   precipitation: number;
   city: string;
 };
+
+export type ForecastPoint = {
+  date: string;
+  label: string;
+  score: number;
+  bestHour: string;
+  temperature: number;
+  condition: "sunny" | "partly-cloudy" | "cloudy" | "rainy";
+};

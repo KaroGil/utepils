@@ -11,6 +11,7 @@ import {
   getMeterColor,
   getConditionLabel,
 } from "../lib/calculations";
+import Forecast from "./components/forcast";
 
 export default function Page() {
   const now = new Date();
@@ -22,6 +23,7 @@ export default function Page() {
     condition: "cloudy",
     city: "",
   });
+  const [showForecast, setShowForecast] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -49,7 +51,19 @@ export default function Page() {
     <main
       className={`min-h-screen bg-linear-to-br ${backgroundClass} text-slate-900`}
     >
-      <div className="mx-auto flex min-h-screen max-w-[1350px] items-center justify-center p-6">
+      <button
+        className="flex flex-col gap-1 absolute top-4 right-4 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed"
+        onClick={() => setShowForecast((prev) => !prev)}
+      >
+        <span className="h-0.5 w-3 bg-slate-900"></span>
+        <span className="h-0.5 w-3 bg-slate-900"></span>
+        <span className="h-0.5 w-3 bg-slate-900"></span>
+      </button>
+
+      {showForecast && <Forecast />}
+      <div
+        className={`mx-auto flex ${!showForecast && "min-h-screen"} max-w-337.5 items-center justify-center p-6`}
+      >
         <div className="grid w-full gap-6 lg:grid-cols-[1.2fr_0.8fr]">
           <section className="rounded-4xl bg-white/70 p-8 shadow-2xl backdrop-blur-xl">
             <div className="mb-8 flex items-start justify-between gap-4">
