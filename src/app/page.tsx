@@ -1,65 +1,148 @@
-import Image from "next/image";
+"use client";
+import { fetchWeather } from "@/lib/weather";
+import { useEffect, useState } from "react";
+import InfoCard from "./components/InfoCard";
+import ReasonRow from "./components/ReasonRow";
+import { WeatherData } from "@/types/weather";
+import {
+  calculateUtepilsScore,
+  getVerdict,
+  getBackgroundClass,
+  getMeterColor,
+  getConditionLabel,
+} from "./util/calculations";
 
-export default function Home() {
+export default function Page() {
+  const now = new Date();
+  const hour = now.getHours();
+  const [weather, setWeather] = useState<WeatherData>({
+    temperature: 0,
+    wind: 0,
+    precipitation: 0,
+    condition: "cloudy",
+    city: "",
+  });
+
+  useEffect(() => {
+    async function load() {
+      const weather = await fetchWeather(60.39299, 5.32415); //Bergen
+      setWeather(weather);
+    }
+
+    load();
+  }, []);
+
+  const score = calculateUtepilsScore(
+    weather.temperature,
+    weather.wind,
+    weather.condition,
+    weather.precipitation,
+    hour,
+  );
+
+  const verdict = getVerdict(score);
+  const backgroundClass = getBackgroundClass(score);
+  const meterColor = getMeterColor(score);
+  const conditionLabel = getConditionLabel(weather.condition);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main
+      className={`min-h-screen bg-linear-to-br ${backgroundClass} text-slate-900`}
+    >
+      <div className="mx-auto flex min-h-screen max-w-6xl items-center justify-center p-6">
+        <div className="grid w-full gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+          <section className="rounded-4xl bg-white/70 p-8 shadow-2xl backdrop-blur-xl">
+            <div className="mb-8 flex items-start justify-between gap-4">
+              <div>
+                <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-slate-600">
+                  Utepils-meter
+                </p>
+                <h1 className="text-4xl font-black tracking-tight sm:text-6xl">
+                  {verdict.title}
+                </h1>
+                <p className="mt-3 max-w-xl text-lg text-slate-700">
+                  {verdict.subtitle}
+                </p>
+              </div>
+              <div className="text-5xl sm:text-6xl">{verdict.emoji}</div>
+            </div>
+
+            <div className="mb-6 rounded-3xl bg-slate-900 p-6 text-white shadow-lg">
+              <div className="flex items-end justify-between gap-4">
+                <div>
+                  <p className="text-sm uppercase tracking-[0.2em] text-slate-300">
+                    Utepils-score
+                  </p>
+                  <p className="text-6xl font-black">{score}%</p>
+                </div>
+
+                <div className="text-right text-sm text-slate-300">
+                  <p>{weather.city}</p>
+                  <p>
+                    {now.toLocaleTimeString("no-NO", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 h-4 w-full rounded-full bg-white/15">
+                <div
+                  className={`h-4 rounded-full ${meterColor} transition-all duration-700`}
+                  style={{ width: `${score}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <InfoCard label="Temperatur" value={`${weather.temperature}°C`} />
+              <InfoCard label="Vind" value={`${weather.wind} m/s`} />
+              <InfoCard label="Vær" value={conditionLabel} />
+              <InfoCard label="Nedbør" value={`${weather.precipitation} mm`} />
+            </div>
+          </section>
+
+          <aside className="rounded-4xl bg-white/60 p-8 shadow-2xl backdrop-blur-xl">
+            <h2 className="text-2xl font-bold">
+              Hvorfor fikk du denne scoren?
+            </h2>
+
+            <div className="mt-6 space-y-4">
+              <ReasonRow
+                title={`Temperatur ${weather.temperature}°C`}
+                description={
+                  weather.temperature >= 15 && weather.temperature <= 22
+                    ? "Perfekt temperatur for å sitte ute lenge"
+                    : weather.temperature < 15
+                      ? "Litt kjølig, men ikke umulig"
+                      : "Varmt nok til god stemning"
+                }
+              />
+
+              <ReasonRow
+                title={`Tid på dagen ${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`}
+                description={
+                  hour >= 16 && hour < 22
+                    ? "Prime time for utepils"
+                    : hour >= 12
+                      ? "Det nærmer seg, men ikke helt peak ennå"
+                      : "Fortsatt litt tidlig for full utepilsfølelse"
+                }
+              />
+
+              <ReasonRow
+                title="Vind og nedbør"
+                description={
+                  weather.wind < 5 && weather.precipitation === 0
+                    ? "Lite vind og tørt vær trekker opp stemningen"
+                    : "Vind eller nedbør trekker stemningen ned"
+                }
+              />
+            </div>
+          </aside>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }
