@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchWeather } from "@/lib/weather";
+import { fetchWeatherNow } from "@/lib/weather";
 import { calculateUtepilsScore, getVerdict } from "@/lib/calculations";
 import { isValidLatitude, isValidLongitude } from "@/lib/coords";
 
@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Invalid lat/lon" }, { status: 400 });
     }
 
-    const weather = await fetchWeather(lat, lon);
+    const weather = await fetchWeatherNow(lat, lon);
     const hour = new Date().getHours();
 
     const score = calculateUtepilsScore(
