@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchWeather } from "@/lib/weather";
 import { calculateUtepilsScore, getVerdict } from "@/lib/calculations";
-
-function isValidLatitude(lat: number) {
-  return Number.isFinite(lat) && lat >= -90 && lat <= 90;
-}
-
-function isValidLongitude(lon: number) {
-  return Number.isFinite(lon) && lon >= -180 && lon <= 180;
-}
+import { isValidLatitude, isValidLongitude } from "@/lib/coords";
 
 export async function GET(req: NextRequest) {
   try {
