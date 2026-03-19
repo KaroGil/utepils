@@ -3,7 +3,7 @@ import { fetchWeather } from "@/lib/weather";
 import { useEffect, useState } from "react";
 import InfoCard from "./components/InfoCard";
 import ReasonRow from "./components/ReasonRow";
-import { WeatherData } from "@/types/weather";
+import { BergenResponse, WeatherData } from "@/types/weather";
 import {
   calculateUtepilsScore,
   getVerdict,
@@ -24,11 +24,25 @@ export default function Page() {
     city: "",
   });
   const [showForecast, setShowForecast] = useState(false);
+  const [bergendata, setBergenData] = useState<BergenResponse | null>(null);
 
   useEffect(() => {
     async function load() {
-      const weather = await fetchWeather(60.39299, 5.32415); //Bergen
-      setWeather(weather);
+      try {
+        const res = await fetch("/api/utepils/bergen");
+        const data = await res.json();
+
+        console.log("bergen api response", data);
+
+        if (!res.ok || !data.weather) {
+          return;
+        }
+        console.log("data", data);
+        setWeather(data.weather);
+        setBergenData(data);
+      } catch (error) {
+        console.error("Failed to load Bergen data", error);
+      }
     }
 
     load();
@@ -154,6 +168,19 @@ export default function Page() {
                   weather.wind < 5 && weather.precipitation === 0
                     ? "Lite vind og tørt vær trekker opp stemningen"
                     : "Vind eller nedbør trekker stemningen ned"
+                }
+              />
+              <ReasonRow
+                title="Peak i dag"
+                value={
+                  bergendata?.peakToday?.time
+                    ? `Kl. ${bergendata.peakToday.time}`
+                    : "—"
+                }
+                description={
+                  bergendata?.peakToday?.score != null
+                    ? `Beste estimerte utepilsstemning i dag er rundt dette tidspunktet (${bergendata.peakToday.score}%).`
+                    : "Fant ikke noe tydelig peak-tidspunkt i dag."
                 }
               />
             </div>

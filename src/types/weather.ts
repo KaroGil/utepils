@@ -16,3 +16,22 @@ export type ForecastPoint = {
   temperature: number;
   condition: "sunny" | "partly-cloudy" | "cloudy" | "rainy";
 };
+
+export type BergenResponse = {
+  city: string;
+  score: number;
+  verdict: string;
+  weather: {
+    temperature: number;
+    wind: number;
+    precipitation: number;
+    condition: "sunny" | "partly-cloudy" | "cloudy" | "rainy";
+  };
+  sun: {
+    sunset: string | null;
+  };
+  peakToday: {
+    time: string | null;
+    score: number | null;
+  };
+};
