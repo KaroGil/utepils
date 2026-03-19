@@ -62,7 +62,7 @@ Response:
 
 ### Forecast
 
-```
+```http
 GET /api/utepils/bergen/forecast
 ```
 
@@ -86,13 +86,13 @@ Response:
 
 ### Score by location
 
-```
+```http
 GET /api/utepils?lat={lat}&lon={lon}
 ```
 
 example:
 
-```
+```http
 GET /api/utepils?lat=60.39299&lon=5.32415
 ```
 
