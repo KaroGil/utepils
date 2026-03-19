@@ -1,16 +1,15 @@
 "use client";
-import { fetchWeather } from "@/lib/weather";
+
 import { useEffect, useState } from "react";
 import InfoCard from "./components/InfoCard";
 import ReasonRow from "./components/ReasonRow";
-import { WeatherData } from "@/types/weather";
+import { BergenResponse, WeatherData } from "@/types/weather";
 import {
-  calculateUtepilsScore,
-  getVerdict,
   getBackgroundClass,
   getMeterColor,
   getConditionLabel,
 } from "../lib/calculations";
+import Forecast from "./components/forcast";
 
 export default function Page() {
   const now = new Date();
@@ -22,34 +21,50 @@ export default function Page() {
     condition: "cloudy",
     city: "",
   });
+  const [showForecast, setShowForecast] = useState(false);
+  const [bergendata, setBergenData] = useState<BergenResponse | null>(null);
 
   useEffect(() => {
     async function load() {
-      const weather = await fetchWeather(60.39299, 5.32415); //Bergen
-      setWeather(weather);
+      try {
+        const res = await fetch("/api/utepils/bergen");
+        const data = await res.json();
+
+        if (!res.ok || !data.weather) {
+          return;
+        }
+
+        setWeather(data.weather);
+        setBergenData(data);
+      } catch (error) {
+        console.error("Failed to load Bergen data", error);
+      }
     }
 
     load();
   }, []);
 
-  const score = calculateUtepilsScore(
-    weather.temperature,
-    weather.wind,
-    weather.condition,
-    weather.precipitation,
-    hour,
-  );
-
-  const verdict = getVerdict(score);
-  const backgroundClass = getBackgroundClass(score);
-  const meterColor = getMeterColor(score);
+  const backgroundClass = getBackgroundClass(bergendata?.score ?? 0);
+  const meterColor = getMeterColor(bergendata?.score ?? 0);
   const conditionLabel = getConditionLabel(weather.condition);
 
   return (
     <main
       className={`min-h-screen bg-linear-to-br ${backgroundClass} text-slate-900`}
     >
-      <div className="mx-auto flex min-h-screen max-w-[1350px] items-center justify-center p-6">
+      <button
+        className="flex flex-col gap-1 absolute top-4 right-4 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed"
+        onClick={() => setShowForecast((prev) => !prev)}
+      >
+        <span className="h-0.5 w-3 bg-slate-900"></span>
+        <span className="h-0.5 w-3 bg-slate-900"></span>
+        <span className="h-0.5 w-3 bg-slate-900"></span>
+      </button>
+
+      {showForecast && <Forecast />}
+      <div
+        className={`mx-auto flex ${!showForecast && "min-h-screen"} max-w-337.5 items-center justify-center p-6`}
+      >
         <div className="grid w-full gap-6 lg:grid-cols-[1.2fr_0.8fr]">
           <section className="rounded-4xl bg-white/70 p-8 shadow-2xl backdrop-blur-xl">
             <div className="mb-8 flex items-start justify-between gap-4">
@@ -58,13 +73,15 @@ export default function Page() {
                   Utepils-meter
                 </p>
                 <h1 className="text-4xl font-black tracking-tight sm:text-6xl">
-                  {verdict.title}
+                  {bergendata?.verdict.title}
                 </h1>
                 <p className="mt-3 max-w-xl text-lg text-slate-700">
-                  {verdict.subtitle}
+                  {bergendata?.verdict.subtitle}
                 </p>
               </div>
-              <div className="text-5xl sm:text-6xl">{verdict.emoji}</div>
+              <div className="text-5xl sm:text-6xl">
+                {bergendata?.verdict.emoji}
+              </div>
             </div>
 
             <div className="mb-6 rounded-3xl bg-slate-900 p-6 text-white shadow-lg">
@@ -73,7 +90,7 @@ export default function Page() {
                   <p className="text-sm uppercase tracking-[0.2em] text-slate-300">
                     Utepils-score
                   </p>
-                  <p className="text-6xl font-black">{score}%</p>
+                  <p className="text-6xl font-black">{bergendata?.score}%</p>
                 </div>
 
                 <div className="text-right text-sm text-slate-300">
@@ -90,7 +107,7 @@ export default function Page() {
               <div className="mt-5 h-4 w-full rounded-full bg-white/15">
                 <div
                   className={`h-4 rounded-full ${meterColor} transition-all duration-700`}
-                  style={{ width: `${score}%` }}
+                  style={{ width: `${bergendata?.score}%` }}
                 />
               </div>
             </div>
@@ -140,6 +157,19 @@ export default function Page() {
                   weather.wind < 5 && weather.precipitation === 0
                     ? "Lite vind og tørt vær trekker opp stemningen"
                     : "Vind eller nedbør trekker stemningen ned"
+                }
+              />
+              <ReasonRow
+                title="Peak i dag"
+                value={
+                  bergendata?.peakToday?.time
+                    ? `Kl. ${bergendata.peakToday.time}`
+                    : "—"
+                }
+                description={
+                  bergendata?.peakToday?.score != null
+                    ? `Beste estimerte utepilsstemning i dag er rundt dette tidspunktet (${bergendata.peakToday.score}%).`
+                    : "Fant ikke noe tydelig peak-tidspunkt i dag."
                 }
               />
             </div>
