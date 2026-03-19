@@ -137,3 +137,11 @@ export function getForecastEmoji(score: number) {
 export function getNextGoodUtepilsDay(forecast: ForecastPoint[]) {
   return forecast.find((day) => day.score >= 75) ?? null;
 }
+
+export function mapSymbolToCondition(symbol?: string): WeatherCondition {
+  if (!symbol) return "cloudy";
+  if (symbol.includes("rain")) return "rainy";
+  if (symbol.includes("clearsky")) return "sunny";
+  if (symbol.includes("partlycloudy")) return "partly-cloudy";
+  return "cloudy";
+}

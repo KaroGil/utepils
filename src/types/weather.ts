@@ -14,18 +14,42 @@ export type ForecastPoint = {
   score: number;
   bestHour: string;
   temperature: number;
-  condition: "sunny" | "partly-cloudy" | "cloudy" | "rainy";
+  condition: WeatherCondition;
+};
+
+export type ForecastEntry = {
+  time?: string;
+  data?: {
+    instant?: {
+      details?: {
+        air_temperature?: number;
+        wind_speed?: number;
+      };
+    };
+    next_1_hours?: {
+      details?: {
+        precipitation_amount?: number;
+      };
+      summary?: {
+        symbol_code?: string;
+      };
+    };
+  };
 };
 
 export type BergenResponse = {
   city: string;
   score: number;
-  verdict: string;
+  verdict: {
+    title: string;
+    subtitle: string;
+    emoji: string;
+  };
   weather: {
     temperature: number;
     wind: number;
     precipitation: number;
-    condition: "sunny" | "partly-cloudy" | "cloudy" | "rainy";
+    condition: WeatherCondition;
   };
   sun: {
     sunset: string | null;

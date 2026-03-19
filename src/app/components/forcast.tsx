@@ -16,8 +16,6 @@ export default function Forecast() {
         const res = await fetch("/api/utepils/bergen/forecast");
         const data = await res.json();
 
-        console.log("forecast response", data);
-
         setForecast(data.predictions ?? []);
       } catch (error) {
         console.error("Could not load forecast", error);

@@ -2,15 +2,9 @@ import { NextResponse } from "next/server";
 import {
   BEST_TIME_OF_DAY_BONUS,
   calculateUtepilsScoreWithoutTime,
+  mapSymbolToCondition,
 } from "@/lib/calculations";
-import { WeatherCondition } from "@/lib/weather";
-
-function mapSymbolToCondition(symbol: string): WeatherCondition {
-  if (symbol.includes("rain")) return "rainy";
-  if (symbol.includes("clearsky")) return "sunny";
-  if (symbol.includes("partlycloudy")) return "partly-cloudy";
-  return "cloudy";
-}
+import { WeatherCondition } from "@/types/weather";
 
 type DayPrediction = {
   date: string;

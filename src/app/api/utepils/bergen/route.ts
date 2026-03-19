@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { fetchSunset } from "@/lib/sun";
 import { calculateUtepilsScore, getVerdict } from "@/lib/calculations";
-import { WeatherCondition } from "@/lib/weather";
+import { WeatherCondition } from "@/types/weather";
 
 function mapSymbolToCondition(symbol: string): WeatherCondition {
   if (symbol.includes("rain")) return "rainy";
@@ -12,16 +12,13 @@ function mapSymbolToCondition(symbol: string): WeatherCondition {
 
 export async function GET() {
   try {
+    // Bergen coordinates
     const lat = 60.39299;
     const lon = 5.32415;
 
     const now = new Date();
 
-    const todayDate = now.toLocaleDateString("en-CA", {
-      timeZone: "Europe/Oslo",
-    });
-
-    const todayKey = now.toLocaleDateString("sv-SE", {
+    const todayDate = now.toLocaleDateString("sv-SE", {
       timeZone: "Europe/Oslo",
     });
 
@@ -100,7 +97,7 @@ export async function GET() {
         timeZone: "Europe/Oslo",
       });
 
-      if (entryDayKey !== todayKey) continue;
+      if (entryDayKey !== todayDate) continue;
 
       const hour = Number(
         entryDate.toLocaleTimeString("en-GB", {
@@ -134,8 +131,6 @@ export async function GET() {
         entryDate.toISOString(),
       );
 
-      // Only replace when strictly better.
-      // That means ties keep the first matching time.
       if (peakTodayScore === null || entryScore > peakTodayScore) {
         peakTodayScore = entryScore;
         peakTodayTime = entryDate.toLocaleTimeString("no-NO", {

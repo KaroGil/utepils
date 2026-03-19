@@ -1,12 +1,22 @@
-export type WeatherCondition = "sunny" | "partly-cloudy" | "cloudy" | "rainy";
+import { WeatherData, WeatherCondition } from "../types/weather";
 
-export type WeatherData = {
-  temperature: number;
-  wind: number;
-  precipitation: number;
-  condition: WeatherCondition;
-  city: string;
-};
+async function getCity(lat: number, lon: number): Promise<string> {
+  const res = await fetch(
+    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
+    {
+      headers: {
+        "User-Agent": "utepils-meter-app",
+      },
+    },
+  );
+  const data = await res.json();
+  return (
+    data.address?.city ||
+    data.address?.town ||
+    data.address?.village ||
+    "Unknown"
+  );
+}
 
 export async function fetchWeather(
   lat: number,
@@ -18,6 +28,7 @@ export async function fetchWeather(
       headers: {
         "User-Agent": "utepils-meter-app",
       },
+      cache: "no-store",
     },
   );
 
@@ -38,11 +49,13 @@ export async function fetchWeather(
   else if (symbol?.includes("clearsky")) condition = "sunny";
   else if (symbol?.includes("partlycloudy")) condition = "partly-cloudy";
 
+  const city = await getCity(lat, lon);
+
   return {
     temperature,
     wind,
     precipitation,
     condition,
-    city: "Bergen",
+    city,
   };
 }
