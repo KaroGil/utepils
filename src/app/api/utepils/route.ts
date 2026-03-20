@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     const score = calculateUtepilsScore(
       weather.temperature,
       weather.wind,
-      weather.condition,
+      weather.symbol,
       weather.precipitation,
       hour,
     );

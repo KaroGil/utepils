@@ -1,9 +1,73 @@
-import { ForecastPoint, WeatherCondition } from "@/types/weather";
+import { ForecastPoint } from "@/types/weather";
+
+function calculateTemperature(temperature: number) {
+  if (temperature < 8) return 0;
+  if (temperature < 15) return 20;
+  if (temperature <= 22) return 35;
+  if (temperature > 30) return 20;
+  return 28;
+}
+
+export function calculateCondition(symbol?: string) {
+  if (!symbol) return 0;
+
+  const s = symbol.toLowerCase();
+
+  // 🌧 Rain (worst)
+  if (s.includes("rain")) return -25;
+
+  // ❄️ Snow (also bad)
+  if (s.includes("snow")) return -20;
+
+  // 🌫 Fog
+  if (s.includes("fog")) return -10;
+
+  // ☀️ Clear sky
+  if (s.includes("clearsky")) {
+    if (s.includes("night")) return 10; // less good than day
+    return 25;
+  }
+
+  // 🌤 Fair (nice but not perfect)
+  if (s.includes("fair")) {
+    if (s.includes("night")) return 8;
+    return 20;
+  }
+
+  // ⛅ Partly cloudy
+  if (s.includes("partlycloudy")) {
+    if (s.includes("night")) return 5;
+    return 18;
+  }
+
+  // ☁️ Default cloudy
+  return 8;
+}
+
+function calculateWind(wind: number) {
+  if (wind < 5) return 15;
+  if (wind < 8) return 8;
+  if (wind < 12) return -5;
+  return -18;
+}
+
+function calculatePrecipitation(precipitation: number) {
+  if (precipitation > 0) return -20;
+  return 0;
+}
+
+function calculateTimeOfDay(hour: number) {
+  if (hour < 10) return 0;
+  if (hour < 14) return 6;
+  if (hour < 16) return 12;
+  if (hour < 22) return 25;
+  return 10;
+}
 
 export function calculateUtepilsScore(
   temperature: number,
   wind: number,
-  condition: WeatherCondition,
+  symbol: string,
   precipitation: number,
   hour: number,
   sunsetIso?: string | null,
@@ -11,28 +75,11 @@ export function calculateUtepilsScore(
 ) {
   let score = 0;
 
-  if (temperature < 8) score += 0;
-  else if (temperature < 15) score += 20;
-  else if (temperature <= 22) score += 35;
-  else score += 28;
-
-  if (condition === "sunny") score += 25;
-  else if (condition === "partly-cloudy") score += 18;
-  else if (condition === "cloudy") score += 8;
-  else if (condition === "rainy") score -= 25;
-
-  if (wind < 5) score += 15;
-  else if (wind < 8) score += 8;
-  else if (wind < 12) score -= 5;
-  else score -= 18;
-
-  if (precipitation > 0) score -= 20;
-
-  if (hour < 12) score += 0;
-  else if (hour < 14) score += 6;
-  else if (hour < 16) score += 12;
-  else if (hour < 22) score += 25;
-  else score += 10;
+  score += calculateTemperature(temperature);
+  score += calculateCondition(symbol);
+  score += calculateWind(wind);
+  score += calculatePrecipitation(precipitation);
+  score += calculateTimeOfDay(hour);
 
   if (sunsetIso && currentIso) {
     const now = new Date(currentIso);
@@ -46,6 +93,24 @@ export function calculateUtepilsScore(
       score -= 8;
     }
   }
+
+  return Math.max(0, Math.min(100, score));
+}
+
+export const BEST_TIME_OF_DAY_BONUS = 25;
+
+export function calculateUtepilsScoreWithoutTime(
+  temperature: number,
+  wind: number,
+  condition: string,
+  precipitation: number,
+) {
+  let score = 0;
+
+  score += calculateTemperature(temperature);
+  score += calculateCondition(condition);
+  score += calculateWind(wind);
+  score += calculatePrecipitation(precipitation);
 
   return Math.max(0, Math.min(100, score));
 }
@@ -86,45 +151,16 @@ export function getMeterColor(score: number) {
   return "bg-rose-500";
 }
 
-export function getConditionLabel(condition: WeatherCondition) {
-  const labels: Record<WeatherCondition, string> = {
+export function getConditionLabel(condition: string) {
+  const labels: Record<string, string> = {
     sunny: "Sol",
     "partly-cloudy": "Delvis skyet",
+    clearsky_night: "Klart",
     cloudy: "Overskyet",
     rainy: "Regn",
   };
 
   return labels[condition];
-}
-
-export const BEST_TIME_OF_DAY_BONUS = 25;
-
-export function calculateUtepilsScoreWithoutTime(
-  temperature: number,
-  wind: number,
-  condition: WeatherCondition,
-  precipitation: number,
-) {
-  let score = 0;
-
-  if (temperature < 8) score += 0;
-  else if (temperature < 15) score += 20;
-  else if (temperature <= 22) score += 35;
-  else score += 28;
-
-  if (condition === "sunny") score += 25;
-  else if (condition === "partly-cloudy") score += 18;
-  else if (condition === "cloudy") score += 8;
-  else if (condition === "rainy") score -= 25;
-
-  if (wind < 5) score += 15;
-  else if (wind < 8) score += 8;
-  else if (wind < 12) score -= 5;
-  else score -= 18;
-
-  if (precipitation > 0) score -= 20;
-
-  return Math.max(0, Math.min(100, score));
 }
 
 export function getForecastEmoji(score: number) {
@@ -138,10 +174,15 @@ export function getNextGoodUtepilsDay(forecast: ForecastPoint[]) {
   return forecast.find((day) => day.score >= 75) ?? null;
 }
 
-export function mapSymbolToCondition(symbol?: string): WeatherCondition {
-  if (!symbol) return "sunny";
-  if (symbol.includes("rain")) return "rainy";
-  if (symbol.includes("clearsky")) return "sunny";
-  if (symbol.includes("partlycloudy")) return "partly-cloudy";
+export function mapSymbolToCondition(symbol?: string): string {
+  if (!symbol) return "cloudy";
+
+  const normalized = symbol.toLowerCase();
+
+  if (normalized.includes("rain")) return "rainy";
+  if (normalized.includes("clearsky")) return "sunny";
+  if (normalized.includes("fair")) return "partly-cloudy";
+  if (normalized.includes("partlycloudy")) return "partly-cloudy";
+
   return "cloudy";
 }

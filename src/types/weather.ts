@@ -1,12 +1,9 @@
-export type WeatherCondition = "sunny" | "partly-cloudy" | "cloudy" | "rainy";
-
 export type WeatherData = {
   temperature: number;
   wind: number;
-  condition: WeatherCondition;
   precipitation: number;
   city: string;
-  symbol?: string;
+  symbol: string;
 };
 
 export type ForecastPoint = {
@@ -15,7 +12,7 @@ export type ForecastPoint = {
   score: number;
   bestHour: string;
   temperature: number;
-  condition: WeatherCondition;
+  condition: string;
 };
 
 export type ForecastEntry = {
@@ -50,7 +47,7 @@ export type BergenResponse = {
     temperature: number;
     wind: number;
     precipitation: number;
-    condition: WeatherCondition;
+    condition: string;
   };
   sun: {
     sunset: string | null;

@@ -18,8 +18,8 @@ export default function Page() {
     temperature: 0,
     wind: 0,
     precipitation: 0,
-    condition: "cloudy",
     city: "",
+    symbol: "sunny",
   });
   const [showForecast, setShowForecast] = useState(false);
   const [bergendata, setBergenData] = useState<BergenResponse | null>(null);
@@ -31,7 +31,7 @@ export default function Page() {
         const data = await res.json();
 
         console.log("Bergen data:", data);
-
+        console.log("Bergen WEATHER:", data?.weather);
         if (!res.ok || !data.weather) {
           return;
         }
@@ -48,7 +48,7 @@ export default function Page() {
 
   const backgroundClass = getBackgroundClass(bergendata?.score ?? 0);
   const meterColor = getMeterColor(bergendata?.score ?? 0);
-  const conditionLabel = getConditionLabel(weather.condition);
+  const conditionLabel = getConditionLabel(weather.symbol);
 
   return (
     <main

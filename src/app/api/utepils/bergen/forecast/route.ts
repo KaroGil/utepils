@@ -4,7 +4,6 @@ import {
   calculateUtepilsScoreWithoutTime,
   mapSymbolToCondition,
 } from "@/lib/calculations";
-import { WeatherCondition } from "@/types/weather";
 
 type DayPrediction = {
   date: string;
@@ -12,7 +11,7 @@ type DayPrediction = {
   score: number;
   bestHour: string;
   temperature: number;
-  condition: WeatherCondition;
+  condition: string;
 };
 
 export async function GET() {
