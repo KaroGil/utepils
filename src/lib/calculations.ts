@@ -11,7 +11,7 @@ export function calculateUtepilsScore(
 ) {
   let score = 0;
 
-  if (temperature < 10) score += 0;
+  if (temperature < 8) score += 0;
   else if (temperature < 15) score += 20;
   else if (temperature <= 22) score += 35;
   else score += 28;
@@ -107,7 +107,7 @@ export function calculateUtepilsScoreWithoutTime(
 ) {
   let score = 0;
 
-  if (temperature < 10) score += 0;
+  if (temperature < 8) score += 0;
   else if (temperature < 15) score += 20;
   else if (temperature <= 22) score += 35;
   else score += 28;
@@ -139,7 +139,7 @@ export function getNextGoodUtepilsDay(forecast: ForecastPoint[]) {
 }
 
 export function mapSymbolToCondition(symbol?: string): WeatherCondition {
-  if (!symbol) return "cloudy";
+  if (!symbol) return "sunny";
   if (symbol.includes("rain")) return "rainy";
   if (symbol.includes("clearsky")) return "sunny";
   if (symbol.includes("partlycloudy")) return "partly-cloudy";
