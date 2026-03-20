@@ -10,10 +10,14 @@ import {
   getConditionLabel,
 } from "../lib/calculations";
 import Forecast from "./components/forcast";
+import LoadingScreen from "./components/LoadingScreen";
 
 export default function Page() {
   const now = new Date();
   const hour = now.getHours();
+
+  const [isLoading, setIsLoading] = useState(true);
+
   const [weather, setWeather] = useState<WeatherData>({
     temperature: 0,
     wind: 0,
@@ -38,6 +42,8 @@ export default function Page() {
         setBergenData(data);
       } catch (error) {
         console.error("Failed to load Bergen data", error);
+      } finally {
+        setIsLoading(false);
       }
     }
 
@@ -47,6 +53,10 @@ export default function Page() {
   const backgroundClass = getBackgroundClass(bergendata?.score ?? 0);
   const meterColor = getMeterColor(bergendata?.score ?? 0);
   const conditionLabel = getConditionLabel(weather.symbol);
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
 
   return (
     <main
