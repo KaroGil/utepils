@@ -30,6 +30,8 @@ export default function Page() {
         const res = await fetch("/api/utepils/bergen");
         const data = await res.json();
 
+        console.log("Bergen data:", data);
+
         if (!res.ok || !data.weather) {
           return;
         }

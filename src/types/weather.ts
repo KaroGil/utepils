@@ -6,6 +6,7 @@ export type WeatherData = {
   condition: WeatherCondition;
   precipitation: number;
   city: string;
+  symbol?: string;
 };
 
 export type ForecastPoint = {

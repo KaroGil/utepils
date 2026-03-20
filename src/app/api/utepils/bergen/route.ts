@@ -19,7 +19,6 @@ export async function GET() {
     const sunsetIso = await fetchSunset(lat, lon, todayDate);
     const weather = await fetchWeatherNow(lat, lon);
     const peak = await fetchPeak(lat, lon);
-    console.log("Bergen peak:", peak);
 
     const score = calculateUtepilsScore(
       weather.temperature,

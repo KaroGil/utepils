@@ -98,7 +98,9 @@ export async function fetchWeatherNow(
 
   const symbol = nextHour?.summary?.symbol_code;
 
-  let condition: WeatherCondition = "cloudy";
+  console.log("Current weather symbol:", symbol);
+
+  let condition: WeatherCondition = "sunny";
 
   if (symbol?.includes("rain")) condition = "rainy";
   else if (symbol?.includes("clearsky")) condition = "sunny";
@@ -112,5 +114,6 @@ export async function fetchWeatherNow(
     precipitation,
     condition,
     city,
+    symbol,
   };
 }
