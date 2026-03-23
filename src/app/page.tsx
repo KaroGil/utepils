@@ -17,7 +17,7 @@ export default function Page() {
   const hour = now.getHours();
 
   const [isLoading, setIsLoading] = useState(true);
-  const [showLocalScore, setShowLocalScore] = useState(true);
+  const [showLocalScore, setShowLocalScore] = useState(false);
   const [localData, setLocalData] = useState<BergenResponse | null>(null);
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(
     null,
@@ -118,7 +118,7 @@ export default function Page() {
         <button
           onClick={() => setShowLocalScore((prev) => !prev)}
           className={`relative inline-flex h-6 m-3 w-11 items-center rounded-full transition-colors ${
-            showLocalScore ? "bg-blue-300" : "bg-gray-300"
+            showLocalScore ? "bg-blue-300" : "bg-gray-400"
           }`}
         >
           <span
@@ -128,7 +128,7 @@ export default function Page() {
           />
         </button>
         <span className="text-sm font-medium">
-          {showLocalScore ? "Local" : "Bergen"}
+          {showLocalScore ? "📌 Local" : "📌 Bergen"}
         </span>
       </div>
       {showForecast && <Forecast />}

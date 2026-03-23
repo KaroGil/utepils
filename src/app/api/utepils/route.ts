@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(
       {
-        city: "Your location",
+        city: weather.city,
         score,
         verdict: getVerdict(score),
         weather,
