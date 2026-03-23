@@ -17,6 +17,11 @@ export default function Page() {
   const hour = now.getHours();
 
   const [isLoading, setIsLoading] = useState(true);
+  const [showLocalScore, setShowLocalScore] = useState(true);
+  const [localData, setLocalData] = useState<BergenResponse | null>(null);
+  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(
+    null,
+  );
 
   const [weather, setWeather] = useState<WeatherData>({
     temperature: 0,
@@ -29,29 +34,67 @@ export default function Page() {
   const [bergendata, setBergenData] = useState<BergenResponse | null>(null);
 
   useEffect(() => {
-    async function load() {
+    if (bergendata) return;
+
+    const fetchBergen = async () => {
+      const res = await fetch("/api/utepils/bergen");
+      const data = await res.json();
+      setBergenData(data);
+      setWeather(data.weather);
+    };
+
+    fetchBergen();
+  }, [bergendata]);
+
+  useEffect(() => {
+    if (!showLocalScore) return;
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setCoords({
+          lat: position.coords.latitude,
+          lon: position.coords.longitude,
+        });
+      },
+      (error) => {
+        console.error("Geolocation error:", error);
+      },
+    );
+  }, [showLocalScore]);
+
+  const lat = coords?.lat ?? 60.39299;
+  const lon = coords?.lon ?? 5.32415;
+
+  useEffect(() => {
+    const fetchData = async () => {
       try {
-        const res = await fetch("/api/utepils/bergen");
+        const url =
+          showLocalScore && coords
+            ? `/api/utepils?lat=${lat}&lon=${lon}`
+            : "/api/utepils/bergen"; // Fallback to Bergen if no coords
+
+        const res = await fetch(url);
         const data = await res.json();
 
         if (!res.ok || !data.weather) {
           return;
         }
-
         setWeather(data.weather);
-        setBergenData(data);
+        setLocalData(data);
       } catch (error) {
         console.error("Failed to load Bergen data", error);
       } finally {
         setIsLoading(false);
       }
-    }
+    };
 
-    load();
-  }, []);
+    fetchData();
+  }, [showLocalScore, coords, lat, lon]);
 
-  const backgroundClass = getBackgroundClass(bergendata?.score ?? 0);
-  const meterColor = getMeterColor(bergendata?.score ?? 0);
+  const activeData = showLocalScore ? localData : bergendata;
+
+  const backgroundClass = getBackgroundClass(activeData?.score ?? 0);
+  const meterColor = getMeterColor(activeData?.score ?? 0);
   const conditionLabel = getConditionLabel(weather.symbol);
 
   if (isLoading) {
@@ -71,6 +114,23 @@ export default function Page() {
         <span className="h-0.5 w-3 bg-slate-900"></span>
       </button>
 
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => setShowLocalScore((prev) => !prev)}
+          className={`relative inline-flex h-6 m-3 w-11 items-center rounded-full transition-colors ${
+            showLocalScore ? "bg-blue-300" : "bg-gray-300"
+          }`}
+        >
+          <span
+            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+              showLocalScore ? "translate-x-6" : "translate-x-1"
+            }`}
+          />
+        </button>
+        <span className="text-sm font-medium">
+          {showLocalScore ? "Local" : "Bergen"}
+        </span>
+      </div>
       {showForecast && <Forecast />}
       <div
         className={`mx-auto flex ${!showForecast && "min-h-screen"} max-w-337.5 items-center justify-center p-6`}
@@ -83,14 +143,14 @@ export default function Page() {
                   Utepils-meter
                 </p>
                 <h1 className="text-4xl font-black tracking-tight sm:text-6xl">
-                  {bergendata?.verdict.title}
+                  {activeData?.verdict.title}
                 </h1>
                 <p className="mt-3 max-w-xl text-lg text-slate-700">
-                  {bergendata?.verdict.subtitle}
+                  {activeData?.verdict.subtitle}
                 </p>
               </div>
               <div className="text-5xl sm:text-6xl">
-                {bergendata?.verdict.emoji}
+                {activeData?.verdict.emoji}
               </div>
             </div>
 
@@ -100,7 +160,7 @@ export default function Page() {
                   <p className="text-sm uppercase tracking-[0.2em] text-slate-300">
                     Utepils-score
                   </p>
-                  <p className="text-6xl font-black">{bergendata?.score}%</p>
+                  <p className="text-6xl font-black">{activeData?.score}%</p>
                 </div>
 
                 <div className="text-right text-sm text-slate-300">
@@ -117,7 +177,7 @@ export default function Page() {
               <div className="mt-5 h-4 w-full rounded-full bg-white/15">
                 <div
                   className={`h-4 rounded-full ${meterColor} transition-all duration-700`}
-                  style={{ width: `${bergendata?.score}%` }}
+                  style={{ width: `${activeData?.score}%` }}
                 />
               </div>
             </div>

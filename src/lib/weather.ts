@@ -10,6 +10,9 @@ async function getCity(lat: number, lon: number): Promise<string> {
       },
     },
   );
+  if (!res.ok) {
+    throw new Error(`Reverse geocoding failed: ${res.status}`);
+  }
   const data = await res.json();
   return (
     data.address?.city ||
