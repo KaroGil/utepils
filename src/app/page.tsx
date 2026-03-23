@@ -11,6 +11,8 @@ import {
 } from "../lib/calculations";
 import Forecast from "./components/forcast";
 import LoadingScreen from "./components/LoadingScreen";
+import NorwegianFlagsBackground from "./components/norwegianFlags";
+import { isSeventeenthOfMay } from "@/lib/time";
 
 export default function Page() {
   const now = new Date();
@@ -105,6 +107,9 @@ export default function Page() {
     <main
       className={`min-h-screen bg-linear-to-br ${backgroundClass} text-slate-900`}
     >
+      {isSeventeenthOfMay(new Date().toISOString()) && (
+        <NorwegianFlagsBackground />
+      )}
       <button
         className="flex flex-col gap-1 absolute top-4 right-4 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed"
         onClick={() => setShowForecast((prev) => !prev)}

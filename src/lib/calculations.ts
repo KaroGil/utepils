@@ -1,4 +1,5 @@
 import { ForecastPoint } from "@/types/weather";
+import { isSeventeenthOfMay } from "@/lib/time";
 
 function calculateTemperature(temperature: number) {
   if (temperature < 5) return 0;
@@ -74,6 +75,10 @@ export function calculateUtepilsScore(
   sunsetIso?: string | null,
   currentIso?: string,
 ) {
+  if (currentIso && isSeventeenthOfMay(currentIso)) {
+    return 100;
+  }
+
   let score = 0;
 
   score += calculateTemperature(temperature);
@@ -117,6 +122,14 @@ export function calculateUtepilsScoreWithoutTime(
 }
 
 export function getVerdict(score: number) {
+  if (score == 100 && isSeventeenthOfMay(new Date().toISOString())) {
+    return {
+      title: "Gratulerer med dagen 🇳🇴 ",
+      subtitle: "Utepils er obligatorisk!",
+      emoji: "🇳🇴🥂",
+    };
+  }
+
   if (score >= 75) {
     return {
       title: "UTEPILS! 🍻",
