@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchWeatherNow } from "@/lib/weather";
+import { fetchSunset } from "@/lib/sun";
+import { fetchPeak } from "@/lib/peak";
 import { calculateUtepilsScore, getVerdict } from "@/lib/calculations";
+import { formatOsloTime, getOsloDayKey } from "@/lib/time";
 import { isValidLatitude, isValidLongitude } from "@/lib/coords";
 
 export async function GET(req: NextRequest) {
@@ -14,22 +17,36 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Invalid lat/lon" }, { status: 400 });
     }
 
-    const weather = await fetchWeatherNow(lat, lon);
-    const hour = new Date().getHours();
+    const now = new Date();
+    const todayDate = getOsloDayKey(now);
+    const currentHour = Number(formatOsloTime(now));
+
+    const [weather, sunsetIso, peak] = await Promise.all([
+      fetchWeatherNow(lat, lon),
+      fetchSunset(lat, lon, todayDate),
+      fetchPeak(lat, lon),
+    ]);
 
     const score = calculateUtepilsScore(
       weather.temperature,
       weather.wind,
       weather.symbol,
-      weather.precipitation,
-      hour,
+      weather.precipitation ?? 0,
+      currentHour,
+      sunsetIso,
+      now.toISOString(),
     );
 
     return NextResponse.json(
       {
+        city: weather.city,
         score,
         verdict: getVerdict(score),
         weather,
+        sun: {
+          sunset: sunsetIso,
+        },
+        peakToday: peak,
       },
       {
         status: 200,
@@ -38,9 +55,11 @@ export async function GET(req: NextRequest) {
         },
       },
     );
-  } catch {
+  } catch (error) {
+    console.error("GET /api/utepils/current failed:", error);
+
     return NextResponse.json(
-      { error: "Something went wrong" },
+      { error: "Could not fetch location-based utepils data" },
       { status: 500 },
     );
   }
