@@ -1,7 +1,8 @@
 import { ForecastPoint } from "@/types/weather";
 
 function calculateTemperature(temperature: number) {
-  if (temperature < 8) return 0;
+  if (temperature < 5) return 0;
+  if (temperature < 8) return 10;
   if (temperature < 15) return 20;
   if (temperature <= 22) return 35;
   if (temperature > 30) return 20;
@@ -24,8 +25,8 @@ export function calculateCondition(symbol?: string) {
 
   // ☀️ Clear sky
   if (s.includes("clearsky")) {
-    if (s.includes("night")) return 10; // less good than day
-    return 25;
+    if (s.includes("night")) return 15; // less good than day
+    return 35;
   }
 
   // 🌤 Fair (nice but not perfect)
@@ -37,7 +38,7 @@ export function calculateCondition(symbol?: string) {
   // ⛅ Partly cloudy
   if (s.includes("partlycloudy")) {
     if (s.includes("night")) return 5;
-    return 18;
+    return 25;
   }
 
   // ☁️ Default cloudy
@@ -53,12 +54,12 @@ function calculateWind(wind: number) {
 
 function calculatePrecipitation(precipitation: number) {
   if (precipitation > 0) return -20;
-  return 0;
+  return 10;
 }
 
 function calculateTimeOfDay(hour: number) {
   if (hour < 10) return 0;
-  if (hour < 14) return 6;
+  if (hour < 12) return 6;
   if (hour < 16) return 12;
   if (hour < 22) return 25;
   return 10;
@@ -243,7 +244,7 @@ export function getConditionLabel(condition: string) {
 
 export function getForecastEmoji(score: number) {
   if (score >= 80) return "☀️🍻";
-  if (score >= 60) return "🍺";
+  if (score >= 65) return "🍺🤏";
   if (score >= 45) return "😢";
   return "🍺🥶";
 }

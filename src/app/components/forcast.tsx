@@ -6,39 +6,75 @@ import {
   getNextGoodUtepilsDay,
 } from "../../lib/calculations";
 
-export default function Forecast() {
+export default function Forecast({
+  showLocalScore,
+  coords,
+}: {
+  showLocalScore: boolean;
+  coords: { lat: number; lon: number } | null;
+}) {
   const [forecast, setForecast] = useState<ForecastPoint[]>([]);
+  const [localForecast, setLocalForecast] = useState<ForecastPoint[]>([]);
   const [forecastLoading, setForecastLoading] = useState(true);
+  const [localForecastLoading, setLocalForecastLoading] = useState(false);
 
   useEffect(() => {
-    async function loadForecast() {
+    async function loadBergenForecast() {
       try {
         const res = await fetch("/api/utepils/bergen/forecast");
         const data = await res.json();
-
         setForecast(data.predictions ?? []);
       } catch (error) {
-        console.error("Could not load forecast", error);
+        console.error("Could not load Bergen forecast", error);
       } finally {
         setForecastLoading(false);
       }
     }
 
-    loadForecast();
+    loadBergenForecast();
   }, []);
 
-  const nextGoodUtepilsDay = getNextGoodUtepilsDay(forecast);
+  useEffect(() => {
+    if (!coords || !showLocalScore) return;
+
+    async function loadLocalForecast() {
+      try {
+        setLocalForecastLoading(true);
+
+        const res = await fetch(
+          `/api/utepils/forecast?lat=${coords?.lat}&lon=${coords?.lon}`,
+        );
+        const data = await res.json();
+        setLocalForecast(data.predictions ?? []);
+      } catch (error) {
+        console.error("Could not load local forecast", error);
+      } finally {
+        setLocalForecastLoading(false);
+      }
+    }
+
+    loadLocalForecast();
+  }, [coords, showLocalScore]);
+
+  const activeForecast = showLocalScore ? localForecast : forecast;
+  const isLoading = showLocalScore ? localForecastLoading : forecastLoading;
+
+  const nextGoodUtepilsDay = getNextGoodUtepilsDay(activeForecast);
 
   return (
     <section className="p-10">
-      {forecastLoading ? (
+      {isLoading ? (
         <div className="flex h-32 items-center justify-center text-slate-500">
           Laster varsel...
         </div>
       ) : (
         <>
+          <p className="m-2 font-bold">
+            Forecast for {showLocalScore ? "your location" : "Bergen"}
+          </p>
+
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-7">
-            {forecast.map((day) => {
+            {activeForecast.map((day) => {
               const isNextGoodDay = nextGoodUtepilsDay?.date === day.date;
 
               return (

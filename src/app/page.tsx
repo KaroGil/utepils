@@ -131,7 +131,9 @@ export default function Page() {
           {showLocalScore ? "📌 Local" : "📌 Bergen"}
         </span>
       </div>
-      {showForecast && <Forecast />}
+      {showForecast && (
+        <Forecast showLocalScore={showLocalScore} coords={coords} />
+      )}
       <div
         className={`mx-auto flex ${!showForecast && "min-h-screen"} max-w-337.5 items-center justify-center p-6`}
       >
