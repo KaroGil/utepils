@@ -5,11 +5,11 @@ import { fetchWeatherTimeseries } from "./weather";
 
 export async function fetchPeak(lat: number, lon: number) {
   const data = await fetchWeatherTimeseries(lat, lon);
-
   const timeseries = data?.properties?.timeseries ?? [];
 
   let peakTodayTime: string | null = null;
   let peakTodayScore: number | null = null;
+  const sunsetCache = new Map<string, string>();
 
   for (const entry of timeseries) {
     const iso = entry?.time;
@@ -19,17 +19,14 @@ export async function fetchPeak(lat: number, lon: number) {
     if (!iso || !instant) continue;
 
     const entryDate = new Date(iso);
-    const sunsetIso = await fetchSunset(
-      lat,
-      lon,
-      entryDate.toISOString().split("T")[0],
-    );
-
     const entryDayKey = getOsloDayKey(entryDate);
+    if (entryDayKey !== getOsloDayKey(new Date())) continue;
 
-    if (entryDayKey !== getOsloDayKey(new Date())) {
-      continue; // Skip if not today
+    const dateKey = entryDate.toISOString().split("T")[0];
+    if (!sunsetCache.has(dateKey)) {
+      sunsetCache.set(dateKey, await fetchSunset(lat, lon, dateKey));
     }
+    const sunsetIso = sunsetCache.get(dateKey)!;
 
     const hour = Number(
       entryDate.toLocaleTimeString("en-GB", {
@@ -67,7 +64,7 @@ export async function fetchPeak(lat: number, lon: number) {
       peakTodayScore = entryScore;
       peakTodayTime = formatOsloTime(entryDate);
     }
-
-    return { time: peakTodayTime, score: peakTodayScore };
   }
+
+  return { time: peakTodayTime, score: peakTodayScore };
 }

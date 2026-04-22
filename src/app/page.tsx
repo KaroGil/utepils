@@ -235,7 +235,7 @@ export default function Page() {
                 title="Peak i dag"
                 value={
                   bergendata?.peakToday?.time
-                    ? "-" // ? `Kl. ${bergendata.peakToday.time}`
+                    ? `Kl. ${bergendata.peakToday.time}`
                     : "—"
                 }
                 description={

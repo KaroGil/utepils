@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   BEST_TIME_OF_DAY_BONUS,
+  calculateUtepilsScore,
   calculateUtepilsScoreWithoutTime,
   mapSymbolToCondition,
 } from "@/lib/calculations";
@@ -75,16 +76,24 @@ export async function GET() {
         continue;
       }
 
-      const weatherScore = calculateUtepilsScoreWithoutTime(
-        temperature,
-        wind,
-        condition,
-        precipitation,
-      );
+      const hourNum = dateObj.toLocaleTimeString("en-GB", {
+        timeZone: "Europe/Oslo",
+        hour: "2-digit",
+        hour12: false,
+      });
 
       const score = Math.max(
         0,
-        Math.min(100, weatherScore + BEST_TIME_OF_DAY_BONUS),
+        Math.min(
+          100,
+          calculateUtepilsScore(
+            temperature,
+            wind,
+            condition,
+            precipitation,
+            Number(hourNum),
+          ),
+        ),
       );
 
       const existing = grouped.get(dateKey);
