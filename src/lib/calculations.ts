@@ -5,7 +5,7 @@ function calculateTemperature(temperature: number) {
   if (temperature < 8) return 10;
   if (temperature < 15) return 20;
   if (temperature <= 22) return 35;
-  if (temperature > 30) return 20;
+  if (temperature > 37) return 20;
   return 28;
 }
 
