@@ -16,6 +16,10 @@ pnpm dev
 bun dev
 ```
 
+## 📲 Gjør det om til en widget på mobilen
+Vil du ha utepils scoren lett tilgjengelig som en widget på hjemmeskjermen? Og har du en Iphone??
+Gå innpå https://github.com/KaroGil/utepils-widget for å sjekke ut hvordan du kan gjøre den om til en widget 😎
+
 ## 🚀 Features
 
 - 🌡️ Real-time utepils score
