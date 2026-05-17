@@ -1,17 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import InfoCard from "./components/InfoCard";
-import ReasonRow from "./components/ReasonRow";
+import InfoCard from "../components/InfoCard";
+import ReasonRow from "../components/ReasonRow";
 import { BergenResponse, WeatherData } from "@/types/weather";
 import {
   getBackgroundClass,
   getMeterColor,
   getConditionLabel,
-} from "../lib/calculations";
-import Forecast from "./components/forcast";
-import LoadingScreen from "./components/LoadingScreen";
-import NorwegianFlagsBackground from "./components/norwegianFlags";
+} from "../../lib/calculations";
+import Forecast from "../components/forcast";
+import LoadingScreen from "../components/LoadingScreen";
+import NorwegianFlagsBackground from "../components/norwegianFlags";
 import { isSeventeenthOfMay } from "@/lib/time";
 
 export default function Page() {
