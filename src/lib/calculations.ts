@@ -1,6 +1,6 @@
 import { ForecastPoint } from "@/types/weather";
 
-function calculateTemperature(temperature: number) {
+export function calculateTemperature(temperature: number) {
   if (temperature < 5) return 0;
   if (temperature < 8) return 10;
   if (temperature < 15) return 20;
@@ -45,19 +45,19 @@ export function calculateCondition(symbol?: string) {
   return 8;
 }
 
-function calculateWind(wind: number) {
+export function calculateWind(wind: number) {
   if (wind < 5) return 15;
   if (wind < 8) return 8;
   if (wind < 12) return -5;
   return -18;
 }
 
-function calculatePrecipitation(precipitation: number) {
+export function calculatePrecipitation(precipitation: number) {
   if (precipitation > 0) return -20;
   return 10;
 }
 
-function calculateTimeOfDay(hour: number) {
+export function calculateTimeOfDay(hour: number) {
   if (hour < 10) return 0;
   if (hour < 12) return 6;
   if (hour < 16) return 12;

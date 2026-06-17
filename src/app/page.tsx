@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import InfoCard from "./components/InfoCard";
 import ReasonRow from "./components/ReasonRow";
+import { HelpCircle } from "lucide-react";
 import { BergenResponse, WeatherData } from "@/types/weather";
 import {
   getBackgroundClass,
@@ -11,6 +12,7 @@ import {
 } from "../lib/calculations";
 import Forecast from "./components/forcast";
 import LoadingScreen from "./components/LoadingScreen";
+import ScoreModal from "./components/ScoreModal";
 
 export default function Page() {
   const now = new Date();
@@ -19,6 +21,7 @@ export default function Page() {
   const [isLoading, setIsLoading] = useState(true);
   const [showLocalScore, setShowLocalScore] = useState(false);
   const [localData, setLocalData] = useState<BergenResponse | null>(null);
+  const [showModal, setShowModal] = useState(false);
   const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(
     null,
   );
@@ -193,9 +196,16 @@ export default function Page() {
           </section>
 
           <aside className="rounded-4xl bg-white/60 p-8 shadow-2xl backdrop-blur-xl">
-            <h2 className="text-2xl font-bold">
-              Hvorfor fikk du denne scoren?
-            </h2>
+            <div className="mb-4 flex flex-row justify-between items-center gap-2">
+              <h2 className="text-2xl font-bold">
+                Hvorfor fikk du denne scoren?
+              </h2>
+              <HelpCircle
+                size={22}
+                className="text-gray-400 cursor-pointer hover:text-gray-600 transition-colors"
+                onClick={() => setShowModal(true)}
+              />
+            </div>
 
             <div className="mt-6 space-y-4">
               <ReasonRow
@@ -248,6 +258,13 @@ export default function Page() {
           </aside>
         </div>
       </div>
+      <ScoreModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        weather={weather}
+        score={activeData?.score ?? 0}
+        hour={hour}
+      />
     </main>
   );
 }
