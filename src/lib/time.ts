@@ -1,4 +1,5 @@
 const OSLO_TIMEZONE = "Europe/Oslo";
+export const TIMEZONE = OSLO_TIMEZONE;
 
 export function getOsloDayKey(date: Date): string {
   return date.toLocaleDateString("sv-SE", {
@@ -24,4 +25,14 @@ export function formatOsloTime(date: Date): string {
   });
 }
 
-export const TIMEZONE = OSLO_TIMEZONE;
+export function isSeventeenthOfMay(dateInput: string | Date) {
+  const date = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
+
+  const osloDate = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Oslo",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+
+  return osloDate === "05-17";
+}
