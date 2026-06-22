@@ -287,7 +287,7 @@ export default function ScoreModal({
 
       <div className="relative w-full max-w-xl sm:mx-4 max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl bg-white shadow-2xl">
         {/* Sticky header */}
-        <div className="sticky top-0 z-10 bg-white/90 backdrop-blur-sm rounded-t-3xl sm:rounded-t-3xl border-b border-slate-100 px-6 pt-6 pb-4">
+        <div className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm rounded-t-3xl sm:rounded-t-3xl border-b border-slate-100 px-6 pt-6 pb-4">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-4">
               <ScoreRing score={score} />
