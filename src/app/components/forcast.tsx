@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { ForecastPoint } from "@/types/weather";
 import {
@@ -6,60 +7,69 @@ import {
   getNextGoodUtepilsDay,
 } from "../../lib/calculations";
 
-export default function Forecast({
-  showLocalScore,
-  coords,
-}: {
-  showLocalScore: boolean;
+type LocationMode = "bergen" | "oslo" | "local";
+
+interface ForecastProps {
+  locationMode: LocationMode;
   coords: { lat: number; lon: number } | null;
-}) {
+}
+
+const locationNames: Record<LocationMode, string> = {
+  bergen: "Bergen",
+  oslo: "Oslo",
+  local: "din posisjon",
+};
+
+export default function Forecast({ locationMode, coords }: ForecastProps) {
   const [forecast, setForecast] = useState<ForecastPoint[]>([]);
-  const [localForecast, setLocalForecast] = useState<ForecastPoint[]>([]);
-  const [forecastLoading, setForecastLoading] = useState(true);
-  const [localForecastLoading, setLocalForecastLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    async function loadBergenForecast() {
+    if (locationMode === "local" && !coords) {
+      setForecast([]);
+      setIsLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function loadForecast() {
       try {
-        const res = await fetch("/api/utepils/bergen/forecast");
+        setIsLoading(true);
+
+        const endpoint =
+          locationMode === "local"
+            ? `/api/utepils/forecast?lat=${coords!.lat}&lon=${coords!.lon}`
+            : `/api/utepils/${locationMode}/forecast`;
+
+        const res = await fetch(endpoint, {
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          throw new Error(`Forecast request failed: ${res.status}`);
+        }
+
         const data = await res.json();
         setForecast(data.predictions ?? []);
       } catch (error) {
-        console.error("Could not load Bergen forecast", error);
+        if (error instanceof Error && error.name === "AbortError") return;
+
+        console.error(`Could not load ${locationMode} forecast`, error);
+        setForecast([]);
       } finally {
-        setForecastLoading(false);
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
+        }
       }
     }
 
-    loadBergenForecast();
-  }, []);
+    loadForecast();
 
-  useEffect(() => {
-    if (!coords || !showLocalScore) return;
+    return () => controller.abort();
+  }, [locationMode, coords?.lat, coords?.lon]);
 
-    async function loadLocalForecast() {
-      try {
-        setLocalForecastLoading(true);
-
-        const res = await fetch(
-          `/api/utepils/forecast?lat=${coords?.lat}&lon=${coords?.lon}`,
-        );
-        const data = await res.json();
-        setLocalForecast(data.predictions ?? []);
-      } catch (error) {
-        console.error("Could not load local forecast", error);
-      } finally {
-        setLocalForecastLoading(false);
-      }
-    }
-
-    loadLocalForecast();
-  }, [coords, showLocalScore]);
-
-  const activeForecast = showLocalScore ? localForecast : forecast;
-  const isLoading = showLocalScore ? localForecastLoading : forecastLoading;
-
-  const nextGoodUtepilsDay = getNextGoodUtepilsDay(activeForecast);
+  const nextGoodUtepilsDay = getNextGoodUtepilsDay(forecast);
 
   return (
     <section className="p-10">
@@ -70,11 +80,11 @@ export default function Forecast({
       ) : (
         <>
           <p className="m-2 font-bold">
-            Forecast for {showLocalScore ? "your location" : "Bergen"}
+            Prognose for {locationNames[locationMode]}
           </p>
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-7">
-            {activeForecast.map((day) => {
+            {forecast.map((day) => {
               const isNextGoodDay = nextGoodUtepilsDay?.date === day.date;
 
               return (
@@ -83,7 +93,7 @@ export default function Forecast({
                   className={[
                     "relative rounded-3xl border p-4 text-center shadow-sm transition-all",
                     isNextGoodDay
-                      ? "border-amber-300 bg-amber-100 ring-2 ring-amber-300 shadow-md scale-[1.02]"
+                      ? "scale-[1.02] border-amber-300 bg-amber-100 shadow-md ring-2 ring-amber-300"
                       : "border-white/70 bg-white/90",
                   ].join(" ")}
                 >

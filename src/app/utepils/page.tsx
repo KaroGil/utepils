@@ -13,17 +13,24 @@ import Forecast from "../components/forcast";
 import LoadingScreen from "../components/LoadingScreen";
 import NorwegianFlagsBackground from "../components/norwegianFlags";
 import { isSeventeenthOfMay } from "@/lib/time";
+import { cities } from "@/lib/cities";
+
+type LocationMode = "bergen" | "oslo" | "local";
 
 export default function Page() {
   const now = new Date();
   const hour = now.getHours();
 
   const [isLoading, setIsLoading] = useState(true);
-  const [showLocalScore, setShowLocalScore] = useState(false);
-  const [localData, setLocalData] = useState<BergenResponse | null>(null);
-  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(
-    null,
-  );
+
+  const [locationMode, setLocationMode] = useState<LocationMode>("bergen");
+
+  const [coords, setCoords] = useState<{
+    lat: number;
+    lon: number;
+  } | null>(null);
+
+  const [activeData, setActiveData] = useState<BergenResponse | null>(null);
 
   const [weather, setWeather] = useState<WeatherData>({
     temperature: 0,
@@ -32,24 +39,22 @@ export default function Page() {
     city: "",
     symbol: "sunny",
   });
+
   const [showForecast, setShowForecast] = useState(false);
-  const [bergendata, setBergenData] = useState<BergenResponse | null>(null);
 
+  /*
+   * Ask for the user's coordinates when Local is selected.
+   */
   useEffect(() => {
-    if (bergendata) return;
+    if (locationMode !== "local" || coords) {
+      return;
+    }
 
-    const fetchBergen = async () => {
-      const res = await fetch("/api/utepils/bergen");
-      const data = await res.json();
-      setBergenData(data);
-      setWeather(data.weather);
-    };
-
-    fetchBergen();
-  }, [bergendata]);
-
-  useEffect(() => {
-    if (!showLocalScore) return;
+    if (!navigator.geolocation) {
+      console.error("Geolocation is not supported by this browser");
+      setLocationMode("bergen");
+      return;
+    }
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -60,42 +65,61 @@ export default function Page() {
       },
       (error) => {
         console.error("Geolocation error:", error);
+        setLocationMode("bergen");
       },
     );
-  }, [showLocalScore]);
+  }, [locationMode, coords]);
 
-  const lat = coords?.lat ?? 60.39299;
-  const lon = coords?.lon ?? 5.32415;
-
+  /*
+   * Fetch Bergen, Oslo, or local weather data.
+   */
   useEffect(() => {
     const fetchData = async () => {
+      if (locationMode === "local" && !coords) {
+        setIsLoading(true);
+        return;
+      }
+
+      setIsLoading(true);
+
       try {
-        const url =
-          showLocalScore && coords
-            ? `/api/utepils?lat=${lat}&lon=${lon}`
-            : "/api/utepils/bergen"; // Fallback to Bergen if no coords
+        let url: string;
 
-        const res = await fetch(url);
-        const data = await res.json();
+        if (locationMode === "local") {
+          const params = new URLSearchParams({
+            lat: String(coords!.lat),
+            lon: String(coords!.lon),
+          });
 
-        if (!res.ok || !data.weather) {
-          return;
+          url = `/api/utepils?${params.toString()}`;
+        } else {
+          url = `/api/utepils/${cities[locationMode].slug}`;
         }
+
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (!response.ok || !data.weather) {
+          throw new Error(data.error ?? `Could not load ${locationMode} data`);
+        }
+
+        setActiveData(data);
         setWeather(data.weather);
-        setLocalData(data);
       } catch (error) {
-        console.error("Failed to load Bergen data", error);
+        console.error(`Failed to load ${locationMode} utepils data:`, error);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchData();
-  }, [showLocalScore, coords, lat, lon]);
+  }, [locationMode, coords]);
 
-  const activeData = showLocalScore ? localData : bergendata;
+  const locationLabel =
+    locationMode === "local" ? "Local" : cities[locationMode].name;
 
   const backgroundClass = getBackgroundClass(activeData?.score ?? 0);
+
   const meterColor = getMeterColor(activeData?.score ?? 0);
   const conditionLabel = getConditionLabel(weather.symbol);
 
@@ -110,37 +134,44 @@ export default function Page() {
       {isSeventeenthOfMay(new Date().toISOString()) && (
         <NorwegianFlagsBackground />
       )}
+
       <button
-        className="flex flex-col gap-1 absolute top-4 right-4 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed"
-        onClick={() => setShowForecast((prev) => !prev)}
+        type="button"
+        className="absolute top-4 right-4 flex flex-col gap-1 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed"
+        onClick={() => {
+          setShowForecast((previous) => !previous);
+        }}
       >
-        <span className="h-0.5 w-3 bg-slate-900"></span>
-        <span className="h-0.5 w-3 bg-slate-900"></span>
-        <span className="h-0.5 w-3 bg-slate-900"></span>
+        <span className="h-0.5 w-3 bg-slate-900" />
+        <span className="h-0.5 w-3 bg-slate-900" />
+        <span className="h-0.5 w-3 bg-slate-900" />
       </button>
 
-      <div className="flex items-center gap-3">
-        <button
-          onClick={() => setShowLocalScore((prev) => !prev)}
-          className={`relative inline-flex h-6 m-3 w-11 items-center rounded-full transition-colors ${
-            showLocalScore ? "bg-blue-300" : "bg-gray-400"
-          }`}
+      <div className="m-3 flex items-center gap-3">
+        <label htmlFor="location" className="text-sm font-medium">
+          📌 Sted
+        </label>
+
+        <select
+          id="location"
+          value={locationMode}
+          onChange={(event) => {
+            setLocationMode(event.target.value as LocationMode);
+          }}
+          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-300"
         >
-          <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-              showLocalScore ? "translate-x-6" : "translate-x-1"
-            }`}
-          />
-        </button>
-        <span className="text-sm font-medium">
-          {showLocalScore ? "📌 Local" : "📌 Bergen"}
-        </span>
+          <option value="bergen">Bergen</option>
+          <option value="oslo">Oslo</option>
+          <option value="local">Min posisjon</option>
+        </select>
       </div>
-      {showForecast && (
-        <Forecast showLocalScore={showLocalScore} coords={coords} />
-      )}
+
+      {showForecast && <Forecast locationMode={locationMode} coords={coords} />}
+
       <div
-        className={`mx-auto flex ${!showForecast && "min-h-screen"} max-w-337.5 items-center justify-center p-6`}
+        className={`mx-auto flex ${
+          !showForecast ? "min-h-screen" : ""
+        } max-w-337.5 items-center justify-center p-6`}
       >
         <div className="grid w-full gap-6 lg:grid-cols-[1.2fr_0.8fr]">
           <section className="rounded-4xl bg-white/70 p-8 shadow-2xl backdrop-blur-xl">
@@ -149,13 +180,16 @@ export default function Page() {
                 <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-slate-600">
                   Utepils-meter
                 </p>
+
                 <h1 className="text-4xl font-black tracking-tight sm:text-6xl">
                   {activeData?.verdict.title}
                 </h1>
+
                 <p className="mt-3 max-w-xl text-lg text-slate-700">
                   {activeData?.verdict.subtitle}
                 </p>
               </div>
+
               <div className="text-5xl sm:text-6xl">
                 {activeData?.verdict.emoji}
               </div>
@@ -167,11 +201,13 @@ export default function Page() {
                   <p className="text-sm uppercase tracking-[0.2em] text-slate-300">
                     Utepils-score
                   </p>
+
                   <p className="text-6xl font-black">{activeData?.score}%</p>
                 </div>
 
                 <div className="text-right text-sm text-slate-300">
                   <p>{weather.city}</p>
+
                   <p>
                     {now.toLocaleTimeString("no-NO", {
                       hour: "2-digit",
@@ -184,15 +220,20 @@ export default function Page() {
               <div className="mt-5 h-4 w-full rounded-full bg-white/15">
                 <div
                   className={`h-4 rounded-full ${meterColor} transition-all duration-700`}
-                  style={{ width: `${activeData?.score}%` }}
+                  style={{
+                    width: `${activeData?.score ?? 0}%`,
+                  }}
                 />
               </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <InfoCard label="Temperatur" value={`${weather.temperature}°C`} />
+
               <InfoCard label="Vind" value={`${weather.wind} m/s`} />
+
               <InfoCard label="Vær" value={conditionLabel} />
+
               <InfoCard label="Nedbør" value={`${weather.precipitation} mm`} />
             </div>
           </section>
@@ -205,7 +246,7 @@ export default function Page() {
             <div className="mt-6 space-y-4">
               <ReasonRow
                 title="Temperatur"
-                value={` ${weather.temperature}°C`}
+                value={`${weather.temperature}°C`}
                 description={
                   weather.temperature >= 15 && weather.temperature <= 22
                     ? "Perfekt temperatur for å sitte ute lenge"
@@ -217,7 +258,10 @@ export default function Page() {
 
               <ReasonRow
                 title="Tid på dagen"
-                value={`${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`}
+                value={`${now.getHours().toString().padStart(2, "0")}:${now
+                  .getMinutes()
+                  .toString()
+                  .padStart(2, "0")}`}
                 description={
                   hour >= 16 && hour < 22
                     ? "Prime time for utepils"
@@ -236,16 +280,17 @@ export default function Page() {
                     : "Vind eller nedbør trekker stemningen ned"
                 }
               />
+
               <ReasonRow
                 title="Peak i dag"
                 value={
-                  bergendata?.peakToday?.time
-                    ? "-" // ? `Kl. ${bergendata.peakToday.time}`
+                  activeData?.peakToday?.time
+                    ? `Kl. ${activeData.peakToday.time}`
                     : "—"
                 }
                 description={
-                  bergendata?.peakToday?.score != null
-                    ? `Beste estimerte utepilsstemning i dag er rundt dette tidspunktet (${bergendata.peakToday.score}%).`
+                  activeData?.peakToday?.score != null
+                    ? `Beste estimerte utepilsstemning i dag er rundt dette tidspunktet (${activeData.peakToday.score}%).`
                     : "Fant ikke noe tydelig peak-tidspunkt i dag."
                 }
               />
