@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  BEST_TIME_OF_DAY_BONUS,
-  calculateUtepilsScoreWithoutTime,
+  calculateUtepilsScore,
   mapSymbolToCondition,
 } from "@/lib/calculations";
 import { isValidLatitude, isValidLongitude } from "@/lib/coords";
@@ -82,16 +81,14 @@ export async function GET(req: NextRequest) {
         continue;
       }
 
-      const weatherScore = calculateUtepilsScoreWithoutTime(
+      const score = calculateUtepilsScore(
         temperature,
         wind,
-        condition,
+        symbol,
         precipitation,
-      );
-
-      const score = Math.max(
-        0,
-        Math.min(100, weatherScore + BEST_TIME_OF_DAY_BONUS),
+        Number(hour.slice(0, 2)),
+        null,
+        iso,
       );
 
       const existing = grouped.get(dateKey);
