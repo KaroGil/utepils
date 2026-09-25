@@ -14,14 +14,14 @@ import {
   getMeterColor,
   getConditionLabel,
 } from "../lib/calculations";
-import { isSeventeenthOfMay } from "@/lib/time";
+import { getOsloHour, isSeventeenthOfMay } from "@/lib/time";
 import { cities } from "@/lib/cities";
 
 type LocationMode = "bergen" | "oslo" | "local";
 
 export default function Page() {
   const now = new Date();
-  const hour = now.getHours();
+  const hour = getOsloHour(now);
 
   const [isLoading, setIsLoading] = useState(true);
   const [locationMode, setLocationMode] = useState<LocationMode>("bergen");
@@ -265,11 +265,11 @@ export default function Page() {
                 Hvorfor fikk du denne scoren?
               </h2>
 
-              <HelpCircle
+              {/* <HelpCircle
                 size={22}
                 className="cursor-pointer text-gray-400 transition-colors hover:text-gray-600"
                 onClick={() => setShowModal(true)}
-              />
+              /> */}
             </div>
 
             <div className="mt-6 space-y-4">
@@ -328,13 +328,14 @@ export default function Page() {
         </div>
       </div>
 
-      <ScoreModal
+      {/* <ScoreModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         weather={weather}
         score={activeData?.score ?? 0}
         hour={hour}
-      />
+        sunsetIso={activeData?.sun?.sunset}
+      /> */}
     </main>
   );
 }

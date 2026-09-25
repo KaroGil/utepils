@@ -12,13 +12,12 @@ function clamp(value: number, min = 0, max = 1) {
 }
 
 export function calculateTemperature(temperature: number) {
-  const scale = temperature < OPTIMAL_TEMPERATURE
-    ? COLD_TEMPERATURE_SCALE
-    : WARM_TEMPERATURE_SCALE;
+  const scale =
+    temperature < OPTIMAL_TEMPERATURE
+      ? COLD_TEMPERATURE_SCALE
+      : WARM_TEMPERATURE_SCALE;
 
-  return clamp(
-    Math.exp(-(((temperature - OPTIMAL_TEMPERATURE) / scale) ** 2)),
-  );
+  return clamp(Math.exp(-(((temperature - OPTIMAL_TEMPERATURE) / scale) ** 2)));
 }
 
 export function calculateCondition(symbol?: string) {
@@ -78,8 +77,10 @@ export function calculateDaylight(hour: number, sunsetIso?: string | null) {
 }
 
 function geometricMean(factors: number[]) {
-  return factors.reduce((product, factor) => product * clamp(factor), 1) **
-    (1 / factors.length);
+  return (
+    factors.reduce((product, factor) => product * clamp(factor), 1) **
+    (1 / factors.length)
+  );
 }
 
 export function calculateTimeOfDay(hour: number, sunsetIso?: string | null) {
@@ -141,7 +142,7 @@ export function getVerdict(score: number) {
 
   if (score >= 90) {
     return {
-      title: "Gå ut. 🍻",
+      title: "UTEPILS IDYLL! ☀️🍻",
       subtitle: "Eksepsjonelle utepilsforhold",
       emoji: "😎",
     };
@@ -157,9 +158,9 @@ export function getVerdict(score: number) {
 
   if (score >= 65) {
     return {
-      title: "Gode forhold",
+      title: "Hvem blir med på utepils? 🙂‍↕️",
       subtitle: "Planlegg utepils",
-      emoji: "🙂",
+      emoji: "🍺",
     };
   }
 
