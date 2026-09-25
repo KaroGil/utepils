@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { fetchSunset } from "@/lib/sun";
 import { calculateUtepilsScore, getVerdict } from "@/lib/calculations";
-import { formatOsloTime, getOsloDayKey } from "@/lib/time";
+import { getOsloDayKey, getOsloHour } from "@/lib/time";
 import { fetchWeatherNow } from "@/lib/weather";
 import { fetchPeak } from "@/lib/peak";
 import type { CityConfig } from "@/lib/cities";
@@ -11,7 +11,7 @@ export function createUtepilsRoute(city: CityConfig) {
     try {
       const now = new Date();
       const todayDate = getOsloDayKey(now);
-      const currentHour = Number(formatOsloTime(now));
+      const currentHour = getOsloHour(now);
 
       const [sunsetIso, weather, peak] = await Promise.all([
         fetchSunset(city.lat, city.lon, todayDate),
