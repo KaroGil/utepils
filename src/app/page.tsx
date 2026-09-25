@@ -132,10 +132,6 @@ export default function Page() {
     };
   }, [locationMode, coords]);
 
-  if (isLoading) {
-    return <LoadingScreen />;
-  }
-
   return (
     <main className="min-h-screen overflow-hidden px-4 py-3 text-slate-900 sm:px-8 sm:py-5">
       {isSeventeenthOfMay(new Date().toISOString()) && (
@@ -148,17 +144,14 @@ export default function Page() {
             <p className="text-xs font-black uppercase tracking-[0.2em] text-[var(--ink)]">
               Utepils-meter
             </p>
-            <span className="hidden text-sm text-slate-500 sm:inline">
-              Vær nok til å gå ut?
-            </span>
           </div>
 
-          <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
+          <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:gap-2">
             <LocationSelector value={locationMode} onChange={setLocationMode} />
             <button
               type="button"
               onClick={() => setShowForecast((previous) => !previous)}
-              className="inline-flex items-center gap-2 rounded-full border border-slate-300/80 bg-white/70 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-400 hover:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--coral)]"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300/80 bg-white/70 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-400 hover:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--coral)]"
               aria-expanded={showForecast}
             >
               <CalendarDays size={16} />
@@ -171,30 +164,34 @@ export default function Page() {
           <Forecast locationMode={locationMode} coords={coords} />
         )}
 
-        <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
-          <div className="animate-rise-in">
-            <ScoreSummary
-              data={activeData}
-              weather={weather}
-              time={now.toLocaleTimeString("no-NO", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            />
-          </div>
+        {isLoading ? (
+          <LoadingScreen />
+        ) : (
+          <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
+            <div className="animate-rise-in">
+              <ScoreSummary
+                data={activeData}
+                weather={weather}
+                time={now.toLocaleTimeString("no-NO", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              />
+            </div>
 
-          <div className="animate-rise-in-delay">
-            <ScoreReasons
-              data={activeData}
-              weather={weather}
-              hour={hour}
-              time={now.toLocaleTimeString("no-NO", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            />
+            <div className="animate-rise-in-delay">
+              <ScoreReasons
+                data={activeData}
+                weather={weather}
+                hour={hour}
+                time={now.toLocaleTimeString("no-NO", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              />
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </main>
   );

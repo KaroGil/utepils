@@ -52,6 +52,27 @@ body {
   animation: rise-in 600ms 120ms ease-out both;
 }
 
+@keyframes loading-bar {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}
+
+.animate-loading-bar {
+  animation: loading-bar 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-loading-bar,
+  .animate-bounce,
+  .animate-pulse {
+    animation: none;
+  }
+}
+
 @keyframes norway-float {
   0% {
     transform: translateY(110vh) rotate(0deg);
