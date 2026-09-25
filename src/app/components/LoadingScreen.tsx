@@ -6,116 +6,52 @@ function Bar({ className }: { className: string }) {
   );
 }
 
+const CHART_BARS = [
+  40, 48, 55, 62, 70, 74, 72, 66, 58, 50, 42, 35, 30, 28, 30, 36, 44, 52,
+];
+
 export default function LoadingScreen() {
   return (
-    <div
-      className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]"
-      role="status"
-      aria-live="polite"
-    >
+    <div className="pb-12" role="status" aria-live="polite">
       <span className="sr-only">Henter utepilsdata…</span>
 
-      <section className="animate-rise-in relative self-center overflow-hidden rounded-[2rem] border border-white/90 bg-[var(--paper)] p-5 shadow-[0_18px_50px_rgba(23,33,43,0.08)] dark:border-white/10 dark:shadow-black/20 sm:p-7">
-        <div className="absolute -right-16 -top-20 h-48 w-48 animate-pulse rounded-full bg-[var(--mint)]/60 blur-2xl" />
+      <section className="animate-rise-in relative pt-4 sm:pt-8">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-10 -top-8 h-64 w-64 animate-pulse rounded-full bg-[var(--mint)]/50 blur-3xl"
+        />
 
-        <div className="mb-5 flex items-start justify-between gap-4">
-          <div className="relative w-full">
-            <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-300">
-              Akkurat nå
-            </p>
-            <Bar className="h-8 w-3/4 max-w-md rounded-2xl sm:h-12" />
-            <Bar className="mt-3 h-4 w-1/2 max-w-sm" />
-          </div>
+        <p className="relative text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-300">
+          Akkurat nå
+        </p>
+        <Bar className="mt-4 h-10 w-3/4 max-w-xl rounded-2xl sm:h-14" />
+        <Bar className="mt-4 h-4 w-1/2 max-w-sm" />
 
-          <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--mint)]/70 text-2xl sm:h-14 sm:w-14 sm:text-3xl">
-            <span className="animate-bounce">🍺</span>
-          </div>
-        </div>
-
-        <div className="relative mb-5 rounded-[1.5rem] bg-[var(--ink)] p-5 text-white shadow-lg shadow-slate-900/10 dark:bg-[#d9eee2] dark:text-[#14241e]">
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400 dark:text-slate-600">
-                Utepils-score
-              </p>
-              <div className="mt-2 h-14 w-28 animate-pulse rounded-2xl bg-white/10 dark:bg-black/10" />
+        <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:gap-10">
+          <Bar className="h-18 w-36 rounded-3xl sm:h-24 sm:w-44" />
+          <div className="flex-1 sm:pb-2">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-300/50 dark:bg-white/10">
+              <div className="animate-loading-bar h-2 w-1/3 rounded-full bg-[var(--ink)]/60" />
             </div>
-
-            <div className="flex flex-col items-end gap-2">
-              <div className="h-4 w-20 animate-pulse rounded-full bg-white/10 dark:bg-black/10" />
-              <div className="h-4 w-12 animate-pulse rounded-full bg-white/10 dark:bg-black/10" />
-            </div>
+            <Bar className="mt-4 h-4 w-2/3" />
           </div>
-
-          <div className="mt-5 h-3 w-full overflow-hidden rounded-full bg-white/15 dark:bg-black/10">
-            <div className="animate-loading-bar h-3 w-1/3 rounded-full bg-[var(--mint)]" />
-          </div>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {["Temperatur", "Vind", "Vær", "Nedbør"].map((label) => (
-            <div
-              key={label}
-              className="rounded-2xl border border-slate-200/80 bg-[var(--surface)] p-4 shadow-sm dark:border-white/10"
-            >
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-300">
-                {label}
-              </p>
-              <Bar className="mt-3 h-6 w-16 rounded-xl" />
-            </div>
-          ))}
         </div>
       </section>
 
-      <aside className="animate-rise-in-delay rounded-[2rem] border border-white/75 bg-[var(--surface-muted)] p-6 shadow-[0_24px_70px_rgba(23,33,43,0.08)] backdrop-blur-xl dark:border-white/10 dark:shadow-black/20 sm:p-8">
-        <div className="mb-4">
-          <p className="mb-1 text-xs font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-300">
-            Forklaring
-          </p>
-          <h2 className="text-2xl font-black tracking-[-0.04em] text-[var(--ink)]">
-            Hvorfor denne scoren?
-          </h2>
-        </div>
-
-        <div className="mt-6 space-y-4">
-          {["Temperatur", "Tid på dagen", "Vind og nedbør", "Peak i dag"].map(
-            (title) => (
-              <div
-                key={title}
-                className="rounded-2xl border border-slate-200/80 bg-[var(--surface)] p-5 shadow-sm dark:border-white/10"
-              >
-                <div className="flex items-center justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
-                      {title}
-                    </h3>
-                    <Bar className="mt-2 h-3.5 w-3/4" />
-                  </div>
-                  <Bar className="h-9 w-16 shrink-0 rounded-xl sm:h-10 sm:w-20" />
-                </div>
-              </div>
-            ),
-          )}
-        </div>
-      </aside>
-
-      <section className="animate-rise-in-delay rounded-[2rem] border border-white/75 bg-[var(--surface-muted)] p-5 shadow-[0_24px_70px_rgba(23,33,43,0.08)] backdrop-blur-xl dark:border-white/10 dark:shadow-black/20 sm:p-7 lg:col-span-2">
-        <p className="mb-1 text-xs font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-300">
+      <section className="animate-rise-in-delay mt-12 border-t border-slate-300/50 pt-8 sm:mt-16">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-300">
           Neste 24 timer
         </p>
-        <h2 className="mb-4 text-2xl font-black tracking-[-0.04em] text-[var(--ink)]">
-          Utepils-score time for time
-        </h2>
-        <div className="flex h-[260px] items-end gap-1.5">
-          {[40, 48, 55, 62, 70, 74, 72, 66, 58, 50, 42, 35, 30, 28, 30, 36].map(
-            (height, i) => (
-              <div
-                key={i}
-                className="flex-1 animate-pulse rounded-t-lg bg-[var(--mint)]/50"
-                style={{ height: `${height}%`, animationDelay: `${i * 60}ms` }}
-              />
-            ),
-          )}
+        <Bar className="mt-2 h-7 w-72 max-w-full rounded-xl" />
+
+        <div className="mt-8 flex h-48 items-end gap-1.5">
+          {CHART_BARS.map((height, i) => (
+            <div
+              key={i}
+              className="flex-1 animate-pulse rounded-t-lg bg-[var(--mint)]/50"
+              style={{ height: `${height}%`, animationDelay: `${i * 60}ms` }}
+            />
+          ))}
         </div>
       </section>
     </div>

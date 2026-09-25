@@ -62,6 +62,7 @@ export type BergenResponse = {
   };
   sun: {
     sunset: string | null;
+    sunrise: string | null;
   };
   peakToday: {
     time: string | null;

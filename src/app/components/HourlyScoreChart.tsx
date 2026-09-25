@@ -7,6 +7,7 @@ import {
   getVerdict,
   getWeatherEmoji,
 } from "@/lib/calculations";
+import { getOsloDayKey } from "@/lib/time";
 
 const HEIGHT = 260;
 const PAD = { top: 56, right: 12, bottom: 30, left: 34 };
@@ -70,6 +71,12 @@ function shortHour(hour: string) {
   return hour.slice(0, 2);
 }
 
+function getDayWord(iso: string) {
+  return getOsloDayKey(new Date(iso)) === getOsloDayKey(new Date())
+    ? "i dag"
+    : "i morgen";
+}
+
 export default function HourlyScoreChart({
   hourly,
 }: {
@@ -122,6 +129,14 @@ export default function HourlyScoreChart({
   const labelEvery = Math.max(1, Math.ceil(MIN_LABEL_GAP / Math.max(step, 1)));
   const nightRuns = getNightRuns(hourly);
 
+  const labels = hourly
+    .map((point, i) => ({
+      point,
+      i,
+      emoji: getWeatherEmoji(point.symbol, point.night),
+    }))
+    .filter(({ i }) => i % labelEvery === 0);
+
   const active = activeIndex !== null ? hourly[activeIndex] : null;
 
   function handlePointer(event: React.PointerEvent<SVGRectElement>) {
@@ -143,33 +158,29 @@ export default function HourlyScoreChart({
   }
 
   return (
-    <section className="rounded-[2rem] border border-white/75 bg-[var(--surface-muted)] p-5 shadow-[0_24px_70px_rgba(23,33,43,0.08)] backdrop-blur-xl dark:border-white/10 dark:shadow-black/20 sm:p-7">
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="mb-1 text-xs font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-300">
-            Neste 24 timer
-          </p>
-          <h2 className="text-2xl font-black tracking-[-0.04em] text-[var(--ink)]">
-            Utepils-score time for time
-          </h2>
-        </div>
+    <section>
+      <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-300">
+        Neste 24 timer
+      </p>
 
-        {best && (
-          <div className="flex flex-wrap gap-2 text-sm font-semibold">
-            <span className="rounded-full bg-[var(--mint)]/70 px-3 py-1.5 text-[var(--ink)]">
-              🍻 Beste: kl. {best.hour} · {best.score}%
-            </span>
-            <span className="rounded-full border border-slate-200/80 bg-[var(--surface)] px-3 py-1.5 text-slate-700 dark:border-white/10 dark:text-slate-200">
-              {zoneHours > 0
-                ? `🔥 ${zoneHours} ${zoneHours === 1 ? "time" : "timer"} over ${UTEPILS_ZONE}%`
-                : `😴 Ingen timer over ${UTEPILS_ZONE}%`}
-            </span>
-          </div>
-        )}
-      </div>
+      {best && (
+        <>
+          <h2 className="mt-1 text-2xl font-black tracking-[-0.04em] text-[var(--ink)]">
+            {zoneHours > 0
+              ? `🍻 Beste utepils ${getDayWord(best.time)} kl. ${best.hour}`
+              : "😴 Ikke noe utepilsvindu de neste 24 timene"}
+          </h2>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            {zoneHours > 0
+              ? `${best.score}% · ${zoneHours} ${zoneHours === 1 ? "time" : "timer"} over ${UTEPILS_ZONE}%`
+              : `Beste er ${getDayWord(best.time)} kl. ${best.hour} med ${best.score}%`}
+            {nightRuns.length > 0 && " · skyggelagt = mørkt"}
+          </p>
+        </>
+      )}
 
       {hourly.length === 0 ? (
-        <p className="rounded-2xl border border-slate-200/80 bg-[var(--surface)] p-5 text-slate-600">
+        <p className="mt-4 text-slate-600">
           Fant ingen timevarsel akkurat nå 🤷
         </p>
       ) : (
@@ -225,7 +236,7 @@ export default function HourlyScoreChart({
                 })}
 
                 {/* Grid */}
-                {[0, 25, 50, 75, 100].map((tick) => (
+                {[0, 50, 100].map((tick) => (
                   <g key={tick}>
                     <line
                       x1={PAD.left}
@@ -235,17 +246,15 @@ export default function HourlyScoreChart({
                       className="stroke-slate-300/60 dark:stroke-white/10"
                       strokeWidth={1}
                     />
-                    {tick % 50 === 0 && (
-                      <text
-                        x={PAD.left - 8}
-                        y={y(tick)}
-                        textAnchor="end"
-                        dominantBaseline="central"
-                        className="fill-slate-400 text-[11px] font-semibold tabular-nums"
-                      >
-                        {tick}%
-                      </text>
-                    )}
+                    <text
+                      x={PAD.left - 8}
+                      y={y(tick)}
+                      textAnchor="end"
+                      dominantBaseline="central"
+                      className="fill-slate-400 text-[11px] font-semibold tabular-nums"
+                    >
+                      {tick}%
+                    </text>
                   </g>
                 ))}
 
@@ -271,33 +280,31 @@ export default function HourlyScoreChart({
                 />
 
                 {/* Weather emojis + hour labels */}
-                {hourly.map((point, i) =>
-                  i % labelEvery === 0 ? (
-                    <g key={point.time}>
-                      <text
-                        x={x(i)}
-                        y={18}
-                        textAnchor="middle"
-                        dominantBaseline="central"
-                        className="text-[16px]"
-                      >
-                        {getWeatherEmoji(point.symbol, point.night)}
-                      </text>
-                      <text
-                        x={x(i)}
-                        y={HEIGHT - 10}
-                        textAnchor="middle"
-                        className={`text-[11px] tabular-nums ${
-                          i === 0
-                            ? "fill-[var(--ink)] font-black"
-                            : "fill-slate-500 font-semibold"
-                        }`}
-                      >
-                        {i === 0 ? "Nå" : shortHour(point.hour)}
-                      </text>
-                    </g>
-                  ) : null,
-                )}
+                {labels.map(({ point, i, emoji }) => (
+                  <g key={point.time}>
+                    <text
+                      x={x(i)}
+                      y={20}
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      className="text-[13px]"
+                    >
+                      {emoji}
+                    </text>
+                    <text
+                      x={x(i)}
+                      y={HEIGHT - 10}
+                      textAnchor="middle"
+                      className={`text-[11px] tabular-nums ${
+                        i === 0
+                          ? "fill-[var(--ink)] font-black"
+                          : "fill-slate-500 font-semibold"
+                      }`}
+                    >
+                      {i === 0 ? "Nå" : shortHour(point.hour)}
+                    </text>
+                  </g>
+                ))}
 
                 {/* Peak marker */}
                 {activeIndex !== bestIndex && (
@@ -391,21 +398,6 @@ export default function HourlyScoreChart({
                 </p>
               </div>
             )}
-          </div>
-
-          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-semibold text-slate-500">
-            <span className="flex items-center gap-1.5">
-              <span className="h-0 w-4 border-t-2 border-dashed border-[var(--coral)]" />
-              Utepils-sone ({UTEPILS_ZONE}%+)
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-3 w-4 rounded bg-slate-900/[0.07]" />
-              Mørkt ute
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-[var(--coral)]" />
-              Beste tidspunkt
-            </span>
           </div>
 
           <table className="sr-only">

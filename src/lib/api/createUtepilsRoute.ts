@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { fetchSunset } from "@/lib/sun";
+import { fetchSunTimes } from "@/lib/sun";
 import { calculateUtepilsScore, getVerdict } from "@/lib/calculations";
 import { getOsloDayKey, getOsloHour } from "@/lib/time";
 import { fetchWeatherNow } from "@/lib/weather";
@@ -14,8 +14,8 @@ export function createUtepilsRoute(city: CityConfig) {
       const todayDate = getOsloDayKey(now);
       const currentHour = getOsloHour(now);
 
-      const [sunsetIso, weather, hourly] = await Promise.all([
-        fetchSunset(city.lat, city.lon, todayDate),
+      const [sun, weather, hourly] = await Promise.all([
+        fetchSunTimes(city.lat, city.lon, todayDate),
         fetchWeatherNow(city.lat, city.lon),
         fetchHourlyScores(city.lat, city.lon),
       ]);
@@ -26,8 +26,9 @@ export function createUtepilsRoute(city: CityConfig) {
         weather.symbol,
         weather.precipitation ?? 0,
         currentHour,
-        sunsetIso,
+        sun.sunset,
         now.toISOString(),
+        sun.sunrise,
       );
 
       return NextResponse.json(
@@ -36,9 +37,7 @@ export function createUtepilsRoute(city: CityConfig) {
           score,
           verdict: getVerdict(score),
           weather,
-          sun: {
-            sunset: sunsetIso,
-          },
+          sun,
           peakToday: findPeakToday(hourly),
           hourly,
         },

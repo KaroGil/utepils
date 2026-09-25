@@ -52,28 +52,53 @@ export function calculatePrecipitation(precipitation: number) {
   return clamp(1 / (1 + (amount / PRECIPITATION_HALF_SCORE) ** 2));
 }
 
-export function calculateDaylight(hour: number, sunsetIso?: string | null) {
-  let sunsetHour = 22;
+/* Oslo clock time of an ISO timestamp as decimal hours, e.g. 19.5. */
+function toOsloDecimalHour(iso: string | null | undefined, fallback: number) {
+  if (!iso) return fallback;
 
-  if (sunsetIso) {
-    const sunset = new Date(sunsetIso);
-    if (!Number.isNaN(sunset.getTime())) {
-      const sunsetTime = sunset.toLocaleTimeString("en-GB", {
-        timeZone: "Europe/Oslo",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      });
-      const [hours, minutes] = sunsetTime.split(":").map(Number);
-      sunsetHour = hours + minutes / 60;
-    }
-  }
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return fallback;
 
-  if (hour < 5 || hour >= sunsetHour + 1) return 0.1;
-  if (hour < 7) return 0.35 + ((hour - 5) / 2) * 0.65;
-  if (hour <= sunsetHour - 1) return 1;
+  const [hours, minutes] = date
+    .toLocaleTimeString("en-GB", {
+      timeZone: "Europe/Oslo",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    })
+    .split(":")
+    .map(Number);
 
-  return 1 - ((hour - (sunsetHour - 1)) / 2) * 0.65;
+  return hours + minutes / 60;
+}
+
+/*
+ * Dark until an hour before sunrise, ramps up to full daylight an hour
+ * after sunrise, and mirrors that around sunset.
+ */
+export function calculateDaylight(
+  hour: number,
+  sunsetIso?: string | null,
+  sunriseIso?: string | null,
+) {
+  const sunriseHour = toOsloDecimalHour(sunriseIso, 6);
+  const sunsetHour = toOsloDecimalHour(sunsetIso, 22);
+
+  const morning =
+    hour < sunriseHour - 1
+      ? 0.1
+      : hour < sunriseHour + 1
+        ? 0.35 + ((hour - (sunriseHour - 1)) / 2) * 0.65
+        : 1;
+
+  const evening =
+    hour >= sunsetHour + 1
+      ? 0.1
+      : hour <= sunsetHour - 1
+        ? 1
+        : 1 - ((hour - (sunsetHour - 1)) / 2) * 0.65;
+
+  return Math.min(morning, evening);
 }
 
 function geometricMean(factors: number[]) {
@@ -83,8 +108,12 @@ function geometricMean(factors: number[]) {
   );
 }
 
-export function calculateTimeOfDay(hour: number, sunsetIso?: string | null) {
-  return calculateDaylight(hour, sunsetIso);
+export function calculateTimeOfDay(
+  hour: number,
+  sunsetIso?: string | null,
+  sunriseIso?: string | null,
+) {
+  return calculateDaylight(hour, sunsetIso, sunriseIso);
 }
 
 export function calculateUtepilsScore(
@@ -95,6 +124,7 @@ export function calculateUtepilsScore(
   hour: number,
   sunsetIso?: string | null,
   currentIso?: string,
+  sunriseIso?: string | null,
 ) {
   if (currentIso && isSeventeenthOfMay(currentIso)) {
     return 100;
@@ -107,7 +137,7 @@ export function calculateUtepilsScore(
         calculateWind(wind),
         calculateCondition(symbol),
         calculatePrecipitation(precipitation),
-        calculateTimeOfDay(hour, sunsetIso),
+        calculateTimeOfDay(hour, sunsetIso, sunriseIso),
       ]),
   );
 }

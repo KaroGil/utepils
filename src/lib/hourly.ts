@@ -1,5 +1,5 @@
 import { calculateDaylight, calculateUtepilsScore } from "./calculations";
-import { fetchSunset } from "./sun";
+import { fetchSunTimes, type SunTimes } from "./sun";
 import { formatOsloTime, getOsloDayKey, getOsloHour } from "./time";
 import { fetchWeatherTimeseries } from "./weather";
 import type { ForecastEntry, HourlyPoint } from "@/types/weather";
@@ -19,15 +19,15 @@ export async function fetchHourlyScores(
   const todayKey = getOsloDayKey(now);
   const tomorrowKey = getOsloDayKey(new Date(now.getTime() + 24 * HOUR_MS));
 
-  const [data, sunsetToday, sunsetTomorrow] = await Promise.all([
+  const [data, sunToday, sunTomorrow] = await Promise.all([
     fetchWeatherTimeseries(lat, lon),
-    fetchSunset(lat, lon, todayKey).catch(() => null),
-    fetchSunset(lat, lon, tomorrowKey).catch(() => null),
+    fetchSunTimes(lat, lon, todayKey).catch(() => null),
+    fetchSunTimes(lat, lon, tomorrowKey).catch(() => null),
   ]);
 
-  const sunsets: Record<string, string | null> = {
-    [todayKey]: sunsetToday,
-    [tomorrowKey]: sunsetTomorrow,
+  const sunTimes: Record<string, SunTimes | null> = {
+    [todayKey]: sunToday,
+    [tomorrowKey]: sunTomorrow,
   };
 
   const timeseries: ForecastEntry[] = data?.properties?.timeseries ?? [];
@@ -57,7 +57,7 @@ export async function fetchHourlyScores(
     }
 
     const hour = getOsloHour(date);
-    const sunsetIso = sunsets[getOsloDayKey(date)] ?? null;
+    const sun = sunTimes[getOsloDayKey(date)] ?? null;
 
     points.push({
       time: iso,
@@ -68,14 +68,15 @@ export async function fetchHourlyScores(
         symbol,
         precipitation,
         hour,
-        sunsetIso,
+        sun?.sunset,
         iso,
+        sun?.sunrise,
       ),
       temperature,
       wind,
       precipitation,
       symbol,
-      night: calculateDaylight(hour, sunsetIso) <= 0.1,
+      night: calculateDaylight(hour, sun?.sunset, sun?.sunrise) <= 0.1,
     });
   }
 

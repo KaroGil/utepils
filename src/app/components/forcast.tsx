@@ -6,6 +6,14 @@ import {
   getForecastEmoji,
   getNextGoodUtepilsDay,
 } from "../../lib/calculations";
+import { getOsloDayKey } from "@/lib/time";
+
+function getWeekday(date: string) {
+  return new Date(date).toLocaleDateString("no-NO", {
+    weekday: "long",
+    timeZone: "UTC",
+  });
+}
 
 type LocationMode = "bergen" | "oslo" | "local";
 
@@ -71,69 +79,53 @@ export default function Forecast({ locationMode, coords }: ForecastProps) {
 
   const nextGoodUtepilsDay = getNextGoodUtepilsDay(forecast);
 
+  const todayKey = getOsloDayKey(new Date());
+
   return (
-    <section className="mb-6 rounded-[2rem] border border-white/80 bg-[var(--paper)]/80 p-5 shadow-[0_18px_50px_rgba(23,33,43,0.08)] backdrop-blur-xl dark:border-white/10 dark:shadow-black/20 sm:p-6">
+    <section>
+      <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-300">
+        Neste dager
+      </p>
+      <h2 className="mt-1 text-2xl font-black tracking-[-0.04em] text-[var(--ink)]">
+        Prognose for {locationNames[locationMode]}
+      </h2>
+
       {isLoading ? (
-        <div className="flex h-32 items-center justify-center text-sm font-semibold text-slate-500">
-          Henter værbildet...
-        </div>
+        <p className="mt-6 text-sm font-semibold text-slate-500">
+          Henter værbildet…
+        </p>
       ) : (
         <>
-          <div className="mb-5 flex items-end justify-between gap-4">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-300">
-                Neste dager
-              </p>
-              <p className="mt-1 text-xl font-black tracking-[-0.03em] text-[var(--ink)]">
-                Prognose for {locationNames[locationMode]}
-              </p>
-            </div>
-            <span className="hidden text-xs font-semibold text-slate-400 sm:block">
-              Neste beste dag markeres
-            </span>
-          </div>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            {nextGoodUtepilsDay
+              ? `🍻 Neste utepilsdag er ${getWeekday(nextGoodUtepilsDay.date)} · ${nextGoodUtepilsDay.score}%`
+              : "Fant ingen tydelig god utepilsdag i prognosen akkurat nå."}
+          </p>
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-7">
+          <ol className="mt-6 grid grid-cols-7 gap-1 sm:gap-2">
             {forecast.map((day) => {
               const isNextGoodDay = nextGoodUtepilsDay?.date === day.date;
 
               return (
-                <div
+                <li
                   key={day.date}
-                  className={[
-                    "relative rounded-2xl border p-4 text-center transition-all",
-                    isNextGoodDay
-                      ? "scale-[1.02] border-[var(--coral)] bg-[#fff0e9] shadow-md ring-2 ring-[var(--coral)]/30"
-                      : "border-slate-200/80 bg-[var(--surface)] hover:-translate-y-0.5 hover:bg-white dark:border-white/10 dark:hover:bg-white/10",
-                  ].join(" ")}
+                  className={`flex flex-col items-center rounded-2xl px-1 py-3 text-center sm:py-4 ${
+                    isNextGoodDay ? "bg-[var(--mint)]/50" : ""
+                  }`}
                 >
-                  {isNextGoodDay && (
-                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-[var(--coral)] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-white shadow-sm">
-                      Neste utepilsdag
-                    </div>
-                  )}
-
-                  <p className="text-xs font-bold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-300">
-                    {day.label}
-                  </p>
-
-                  <div className="mt-4 text-5xl">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-300">
+                    {day.date === todayKey ? "I dag" : day.label}
+                  </span>
+                  <span className="mt-3 whitespace-nowrap text-lg sm:text-3xl">
                     {getForecastEmoji(day.score)}
-                  </div>
-
-                  <p className="mt-3 text-xl font-black tabular-nums text-[var(--ink)]">
+                  </span>
+                  <span className="mt-2 text-base font-black tabular-nums text-[var(--ink)] sm:text-xl">
                     {day.score}%
-                  </p>
-                </div>
+                  </span>
+                </li>
               );
             })}
-          </div>
-
-          {!nextGoodUtepilsDay && (
-            <p className="mt-4 text-center text-sm text-slate-500 dark:text-slate-300">
-              Fant ingen tydelig god utepilsdag i prognosen akkurat nå.
-            </p>
-          )}
+          </ol>
         </>
       )}
     </section>

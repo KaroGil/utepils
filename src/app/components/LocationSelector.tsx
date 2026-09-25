@@ -20,7 +20,7 @@ export default function LocationSelector({
         Hvor er du?
       </span>
 
-      <div className="flex w-full rounded-xl border sm:inline-flex sm:w-fit border-slate-200/80 bg-[var(--surface)] p-0.5 shadow-sm backdrop-blur dark:border-white/10">
+      <div className="flex w-full gap-0.5 rounded-xl border sm:inline-flex sm:w-fit border-slate-200/80 bg-[var(--surface)] p-0.5 shadow-sm backdrop-blur dark:border-white/10">
         {[
           ["bergen", "Bergen"],
           ["oslo", "Oslo"],
@@ -34,7 +34,7 @@ export default function LocationSelector({
               type="button"
               aria-pressed={selected}
               onClick={() => onChange(mode as LocationMode)}
-              className={`inline-flex flex-1 items-center justify-center whitespace-nowrap rounded-xl px-2 py-2.5 text-sm font-semibold sm:flex-none sm:px-3 sm:py-2 transition-all focus:outline-none focus:ring-2 focus:ring-[var(--coral)] focus:ring-offset-1 ${
+              className={`inline-flex flex-1 items-center justify-center whitespace-nowrap rounded-[10px] px-2 py-2.5 text-sm font-semibold sm:flex-none sm:px-3 sm:py-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--coral)] ${
                 selected
                   ? "bg-[var(--control-active-bg)] text-[var(--control-active-text)] shadow-sm"
                   : "text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"

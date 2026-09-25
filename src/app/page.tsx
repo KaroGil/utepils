@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import { CalendarDays } from "lucide-react";
 import Forecast from "./components/forcast";
 import LoadingScreen from "./components/LoadingScreen";
+import Footer from "./components/Footer";
 import HourlyScoreChart from "./components/HourlyScoreChart";
 import LocationSelector from "./components/LocationSelector";
 import ScoreSummary from "./components/ScoreSummary";
-import ScoreReasons from "./components/ScoreReasons";
+import ScoreFactors from "./components/ScoreFactors";
 import NorwegianFlagsBackground from "./components/norwegianFlags";
 import { BergenResponse, WeatherData } from "@/types/weather";
 import { getOsloHour, isSeventeenthOfMay } from "@/lib/time";
@@ -139,7 +140,7 @@ export default function Page() {
         <NorwegianFlagsBackground />
       )}
 
-      <div className="relative z-10 mx-auto max-w-337.5">
+      <div className="relative z-10 mx-auto max-w-5xl">
         <header className="mb-4 flex flex-col gap-3 border-b border-slate-300/50 pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-baseline gap-3">
             <p className="text-xs font-black uppercase tracking-[0.2em] text-[var(--ink)]">
@@ -162,14 +163,16 @@ export default function Page() {
         </header>
 
         {showForecast && (
-          <Forecast locationMode={locationMode} coords={coords} />
+          <div className="animate-rise-in border-b border-slate-300/50 pb-8 pt-4">
+            <Forecast locationMode={locationMode} coords={coords} />
+          </div>
         )}
 
         {isLoading ? (
           <LoadingScreen />
         ) : (
-          <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
-            <div className="animate-rise-in">
+          <div className="pb-12">
+            <div className="animate-rise-in pt-4 sm:pt-8">
               <ScoreSummary
                 data={activeData}
                 weather={weather}
@@ -180,23 +183,23 @@ export default function Page() {
               />
             </div>
 
-            <div className="animate-rise-in-delay">
-              <ScoreReasons
-                data={activeData}
-                weather={weather}
-                hour={hour}
-                time={now.toLocaleTimeString("no-NO", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              />
+            <div className="animate-rise-in-delay mt-12 border-t border-slate-300/50 pt-8 sm:mt-16">
+              <HourlyScoreChart hourly={activeData?.hourly ?? []} />
             </div>
 
-            <div className="animate-rise-in-delay lg:col-span-2">
-              <HourlyScoreChart hourly={activeData?.hourly ?? []} />
+            <div className="animate-rise-in-delay my-10 border-t border-slate-300/50 pt-8">
+              <ScoreFactors
+                score={activeData?.score ?? 0}
+                weather={weather}
+                hour={hour}
+                sunset={activeData?.sun.sunset ?? null}
+                sunrise={activeData?.sun.sunrise ?? null}
+              />
             </div>
           </div>
         )}
+
+        <Footer />
       </div>
     </main>
   );
