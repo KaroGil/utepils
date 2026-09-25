@@ -67,21 +67,31 @@ export default function Forecast({ locationMode, coords }: ForecastProps) {
     loadForecast();
 
     return () => controller.abort();
-  }, [locationMode, coords?.lat, coords?.lon]);
+  }, [locationMode, coords]);
 
   const nextGoodUtepilsDay = getNextGoodUtepilsDay(forecast);
 
   return (
-    <section className="p-10">
+    <section className="mb-6 rounded-[2rem] border border-white/80 bg-[var(--paper)]/80 p-5 shadow-[0_18px_50px_rgba(23,33,43,0.08)] backdrop-blur-xl dark:border-white/10 dark:shadow-black/20 sm:p-6">
       {isLoading ? (
-        <div className="flex h-32 items-center justify-center text-slate-500">
-          Laster varsel...
+        <div className="flex h-32 items-center justify-center text-sm font-semibold text-slate-500">
+          Henter værbildet...
         </div>
       ) : (
         <>
-          <p className="m-2 font-bold">
-            Prognose for {locationNames[locationMode]}
-          </p>
+          <div className="mb-5 flex items-end justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-300">
+                Neste dager
+              </p>
+              <p className="mt-1 text-xl font-black tracking-[-0.03em] text-[var(--ink)]">
+                Prognose for {locationNames[locationMode]}
+              </p>
+            </div>
+            <span className="hidden text-xs font-semibold text-slate-400 sm:block">
+              Beste dag markeres
+            </span>
+          </div>
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-7">
             {forecast.map((day) => {
@@ -91,19 +101,19 @@ export default function Forecast({ locationMode, coords }: ForecastProps) {
                 <div
                   key={day.date}
                   className={[
-                    "relative rounded-3xl border p-4 text-center shadow-sm transition-all",
+                    "relative rounded-2xl border p-4 text-center transition-all",
                     isNextGoodDay
-                      ? "scale-[1.02] border-amber-300 bg-amber-100 shadow-md ring-2 ring-amber-300"
-                      : "border-white/70 bg-white/90",
+                      ? "scale-[1.02] border-[var(--coral)] bg-[#fff0e9] shadow-md ring-2 ring-[var(--coral)]/30"
+                      : "border-slate-200/80 bg-[var(--surface)] hover:-translate-y-0.5 hover:bg-white dark:border-white/10 dark:hover:bg-white/10",
                   ].join(" ")}
                 >
                   {isNextGoodDay && (
-                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-amber-400 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-slate-900 shadow-sm">
+                    <div className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-[var(--coral)] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-white shadow-sm">
                       Neste utepilsdag
                     </div>
                   )}
 
-                  <p className="text-sm font-semibold uppercase tracking-[0.15em] text-slate-500">
+                  <p className="text-xs font-bold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-300">
                     {day.label}
                   </p>
 
@@ -111,7 +121,7 @@ export default function Forecast({ locationMode, coords }: ForecastProps) {
                     {getForecastEmoji(day.score)}
                   </div>
 
-                  <p className="mt-3 text-lg font-bold tabular-nums text-slate-900">
+                  <p className="mt-3 text-xl font-black tabular-nums text-[var(--ink)]">
                     {day.score}%
                   </p>
                 </div>
@@ -120,7 +130,7 @@ export default function Forecast({ locationMode, coords }: ForecastProps) {
           </div>
 
           {!nextGoodUtepilsDay && (
-            <p className="mt-4 text-center text-sm text-slate-500">
+            <p className="mt-4 text-center text-sm text-slate-500 dark:text-slate-300">
               Fant ingen tydelig god utepilsdag i prognosen akkurat nå.
             </p>
           )}

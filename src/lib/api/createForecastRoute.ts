@@ -1,18 +1,6 @@
 import { NextResponse } from "next/server";
-import {
-  calculateUtepilsScore,
-  mapSymbolToCondition,
-} from "@/lib/calculations";
+import { buildDailyForecast } from "@/lib/forecast";
 import type { CityConfig } from "@/lib/cities";
-
-type DayPrediction = {
-  date: string;
-  label: string;
-  score: number;
-  bestHour: string;
-  temperature: number;
-  condition: string;
-};
 
 export function createForecastRoute(city: CityConfig) {
   return async function GET() {
@@ -41,79 +29,10 @@ export function createForecastRoute(city: CityConfig) {
       }
 
       const data = await res.json();
-      const timeseries = data?.properties?.timeseries ?? [];
-
-      const grouped = new Map<string, DayPrediction>();
-
-      for (const entry of timeseries) {
-        const iso = entry?.time;
-        const instant = entry?.data?.instant?.details;
-        const nextHour = entry?.data?.next_1_hours;
-
-        if (!iso || !instant) continue;
-
-        const date = new Date(iso);
-
-        const dateKey = date.toLocaleDateString("sv-SE", {
-          timeZone: city.timeZone,
-        });
-
-        const hour = date.toLocaleTimeString("en-GB", {
-          timeZone: city.timeZone,
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-
-        const temperature = instant.air_temperature;
-        const wind = instant.wind_speed;
-        const precipitation = nextHour?.details?.precipitation_amount ?? 0;
-        const symbol = nextHour?.summary?.symbol_code ?? "";
-
-        if (
-          typeof temperature !== "number" ||
-          typeof wind !== "number" ||
-          typeof precipitation !== "number"
-        ) {
-          continue;
-        }
-
-        const condition = mapSymbolToCondition(symbol);
-
-        const score = calculateUtepilsScore(
-          temperature,
-          wind,
-          symbol,
-          precipitation,
-          Number(hour.slice(0, 2)),
-          null,
-          iso,
-        );
-
-        const existing = grouped.get(dateKey);
-
-        if (!existing || score > existing.score) {
-          grouped.set(dateKey, {
-            date: dateKey,
-            label: date.toLocaleDateString("no-NO", {
-              timeZone: city.timeZone,
-              weekday: "short",
-            }),
-            score,
-            bestHour: hour,
-            temperature,
-            condition,
-          });
-        }
-      }
-
-      const todayKey = new Date().toLocaleDateString("sv-SE", {
-        timeZone: city.timeZone,
-      });
-
-      const predictions = Array.from(grouped.values())
-        .filter((day) => day.date >= todayKey)
-        .sort((a, b) => a.date.localeCompare(b.date))
-        .slice(0, 7);
+      const predictions = buildDailyForecast(
+        data?.properties?.timeseries ?? [],
+        city.timeZone,
+      );
 
       return NextResponse.json(
         {
