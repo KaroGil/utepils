@@ -3,7 +3,7 @@ import { fetchWeatherNow } from "@/lib/weather";
 import { fetchSunset } from "@/lib/sun";
 import { fetchPeak } from "@/lib/peak";
 import { calculateUtepilsScore, getVerdict } from "@/lib/calculations";
-import { formatOsloTime, getOsloDayKey } from "@/lib/time";
+import { getOsloDayKey, getOsloHour } from "@/lib/time";
 import { isValidLatitude, isValidLongitude } from "@/lib/coords";
 
 export async function GET(req: NextRequest) {
@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
 
     const now = new Date();
     const todayDate = getOsloDayKey(now);
-    const currentHour = Number(formatOsloTime(now));
+    const currentHour = getOsloHour(now);
 
     const [weather, sunsetIso, peak] = await Promise.all([
       fetchWeatherNow(lat, lon),
