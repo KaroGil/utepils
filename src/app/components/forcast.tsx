@@ -89,7 +89,7 @@ export default function Forecast({ locationMode, coords }: ForecastProps) {
               </p>
             </div>
             <span className="hidden text-xs font-semibold text-slate-400 sm:block">
-              Beste dag markeres
+              Neste beste dag markeres
             </span>
           </div>
 

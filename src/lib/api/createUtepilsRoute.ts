@@ -3,7 +3,8 @@ import { fetchSunset } from "@/lib/sun";
 import { calculateUtepilsScore, getVerdict } from "@/lib/calculations";
 import { getOsloDayKey, getOsloHour } from "@/lib/time";
 import { fetchWeatherNow } from "@/lib/weather";
-import { fetchPeak } from "@/lib/peak";
+import { fetchHourlyScores } from "@/lib/hourly";
+import { findPeakToday } from "@/lib/peak";
 import type { CityConfig } from "@/lib/cities";
 
 export function createUtepilsRoute(city: CityConfig) {
@@ -13,10 +14,10 @@ export function createUtepilsRoute(city: CityConfig) {
       const todayDate = getOsloDayKey(now);
       const currentHour = getOsloHour(now);
 
-      const [sunsetIso, weather, peak] = await Promise.all([
+      const [sunsetIso, weather, hourly] = await Promise.all([
         fetchSunset(city.lat, city.lon, todayDate),
         fetchWeatherNow(city.lat, city.lon),
-        fetchPeak(city.lat, city.lon),
+        fetchHourlyScores(city.lat, city.lon),
       ]);
 
       const score = calculateUtepilsScore(
@@ -38,7 +39,8 @@ export function createUtepilsRoute(city: CityConfig) {
           sun: {
             sunset: sunsetIso,
           },
-          peakToday: peak,
+          peakToday: findPeakToday(hourly),
+          hourly,
         },
         {
           headers: {

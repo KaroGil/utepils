@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { CalendarDays } from "lucide-react";
 import Forecast from "./components/forcast";
 import LoadingScreen from "./components/LoadingScreen";
+import HourlyScoreChart from "./components/HourlyScoreChart";
 import LocationSelector from "./components/LocationSelector";
 import ScoreSummary from "./components/ScoreSummary";
 import ScoreReasons from "./components/ScoreReasons";
@@ -189,6 +190,10 @@ export default function Page() {
                   minute: "2-digit",
                 })}
               />
+            </div>
+
+            <div className="animate-rise-in-delay lg:col-span-2">
+              <HourlyScoreChart hourly={activeData?.hourly ?? []} />
             </div>
           </div>
         )}

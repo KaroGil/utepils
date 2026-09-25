@@ -98,6 +98,26 @@ export default function LoadingScreen() {
           )}
         </div>
       </aside>
+
+      <section className="animate-rise-in-delay rounded-[2rem] border border-white/75 bg-[var(--surface-muted)] p-5 shadow-[0_24px_70px_rgba(23,33,43,0.08)] backdrop-blur-xl dark:border-white/10 dark:shadow-black/20 sm:p-7 lg:col-span-2">
+        <p className="mb-1 text-xs font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-300">
+          Neste 24 timer
+        </p>
+        <h2 className="mb-4 text-2xl font-black tracking-[-0.04em] text-[var(--ink)]">
+          Utepils-score time for time
+        </h2>
+        <div className="flex h-[260px] items-end gap-1.5">
+          {[40, 48, 55, 62, 70, 74, 72, 66, 58, 50, 42, 35, 30, 28, 30, 36].map(
+            (height, i) => (
+              <div
+                key={i}
+                className="flex-1 animate-pulse rounded-t-lg bg-[var(--mint)]/50"
+                style={{ height: `${height}%`, animationDelay: `${i * 60}ms` }}
+              />
+            ),
+          )}
+        </div>
+      </section>
     </div>
   );
 }

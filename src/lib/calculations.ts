@@ -296,6 +296,22 @@ export function getForecastEmoji(score: number) {
   return "🍺🥶";
 }
 
+export function getWeatherEmoji(symbol: string, night = false) {
+  const normalized = symbol.toLowerCase();
+  const isNight = night || normalized.includes("night");
+
+  if (normalized.includes("thunder")) return "⛈️";
+  if (normalized.includes("snow")) return "❄️";
+  if (normalized.includes("sleet")) return "🌨️";
+  if (normalized.includes("rain")) return "🌧️";
+  if (normalized.includes("fog")) return "🌫️";
+  if (normalized.includes("clearsky")) return isNight ? "🌙" : "☀️";
+  if (normalized.includes("fair")) return isNight ? "🌙" : "🌤️";
+  if (normalized.includes("partlycloudy")) return isNight ? "☁️" : "⛅";
+
+  return "☁️";
+}
+
 export function getNextGoodUtepilsDay(forecast: ForecastPoint[]) {
   return forecast.find((day) => day.score >= 75) ?? null;
 }

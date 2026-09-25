@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchWeatherNow } from "@/lib/weather";
 import { fetchSunset } from "@/lib/sun";
-import { fetchPeak } from "@/lib/peak";
+import { fetchHourlyScores } from "@/lib/hourly";
+import { findPeakToday } from "@/lib/peak";
 import { calculateUtepilsScore, getVerdict } from "@/lib/calculations";
 import { getOsloDayKey, getOsloHour } from "@/lib/time";
 import { isValidLatitude, isValidLongitude } from "@/lib/coords";
@@ -21,10 +22,10 @@ export async function GET(req: NextRequest) {
     const todayDate = getOsloDayKey(now);
     const currentHour = getOsloHour(now);
 
-    const [weather, sunsetIso, peak] = await Promise.all([
+    const [weather, sunsetIso, hourly] = await Promise.all([
       fetchWeatherNow(lat, lon),
       fetchSunset(lat, lon, todayDate),
-      fetchPeak(lat, lon),
+      fetchHourlyScores(lat, lon),
     ]);
 
     const score = calculateUtepilsScore(
@@ -46,7 +47,8 @@ export async function GET(req: NextRequest) {
         sun: {
           sunset: sunsetIso,
         },
-        peakToday: peak,
+        peakToday: findPeakToday(hourly),
+        hourly,
       },
       {
         status: 200,
