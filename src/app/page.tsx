@@ -5,6 +5,7 @@ import { CalendarDays } from "lucide-react";
 import Forecast from "./components/forcast";
 import LoadingScreen from "./components/LoadingScreen";
 import Footer from "./components/Footer";
+import ScoreBackground from "./components/ScoreBackground";
 import HourlyScoreChart from "./components/HourlyScoreChart";
 import LocationSelector from "./components/LocationSelector";
 import ScoreSummary from "./components/ScoreSummary";
@@ -136,6 +137,8 @@ export default function Page() {
 
   return (
     <main className="min-h-screen overflow-hidden px-4 py-3 text-slate-900 sm:px-8 sm:py-5">
+      <ScoreBackground score={activeData?.score ?? null} />
+
       {isSeventeenthOfMay(new Date().toISOString()) && (
         <NorwegianFlagsBackground />
       )}
