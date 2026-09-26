@@ -4,11 +4,7 @@ import { useEffect, useState } from "react";
 import InfoCard from "../components/InfoCard";
 import ReasonRow from "../components/ReasonRow";
 import { BergenResponse, WeatherData } from "@/types/weather";
-import {
-  getBackgroundClass,
-  getMeterColor,
-  getConditionLabel,
-} from "../../lib/calculations";
+import { getMeterColor, getConditionLabel } from "../../lib/calculations";
 import Forecast from "../components/forcast";
 import LoadingScreen from "../components/LoadingScreen";
 import NorwegianFlagsBackground from "../components/norwegianFlags";
@@ -115,11 +111,6 @@ export default function Page() {
     fetchData();
   }, [locationMode, coords]);
 
-  const locationLabel =
-    locationMode === "local" ? "Local" : cities[locationMode].name;
-
-  const backgroundClass = getBackgroundClass(activeData?.score ?? 0);
-
   const meterColor = getMeterColor(activeData?.score ?? 0);
   const conditionLabel = getConditionLabel(weather.symbol);
 
@@ -128,9 +119,7 @@ export default function Page() {
   }
 
   return (
-    <main
-      className={`min-h-screen bg-linear-to-br ${backgroundClass} text-slate-900`}
-    >
+    <main className="min-h-screen bg-[var(--background)] text-slate-900">
       {isSeventeenthOfMay(new Date().toISOString()) && (
         <NorwegianFlagsBackground />
       )}

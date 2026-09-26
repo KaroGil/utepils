@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchWeatherNow } from "@/lib/weather";
-import { fetchSunset } from "@/lib/sun";
-import { fetchPeak } from "@/lib/peak";
+import { fetchSunTimes } from "@/lib/sun";
+import { fetchHourlyScores } from "@/lib/hourly";
+import { findPeakToday } from "@/lib/peak";
 import { calculateUtepilsScore, getVerdict } from "@/lib/calculations";
-import { formatOsloTime, getOsloDayKey } from "@/lib/time";
+import { getOsloDayKey, getOsloHour } from "@/lib/time";
 import { isValidLatitude, isValidLongitude } from "@/lib/coords";
 
 export async function GET(req: NextRequest) {
@@ -19,12 +20,12 @@ export async function GET(req: NextRequest) {
 
     const now = new Date();
     const todayDate = getOsloDayKey(now);
-    const currentHour = Number(formatOsloTime(now));
+    const currentHour = getOsloHour(now);
 
-    const [weather, sunsetIso, peak] = await Promise.all([
+    const [weather, sun, hourly] = await Promise.all([
       fetchWeatherNow(lat, lon),
-      fetchSunset(lat, lon, todayDate),
-      fetchPeak(lat, lon),
+      fetchSunTimes(lat, lon, todayDate),
+      fetchHourlyScores(lat, lon),
     ]);
 
     const score = calculateUtepilsScore(
@@ -33,8 +34,9 @@ export async function GET(req: NextRequest) {
       weather.symbol,
       weather.precipitation ?? 0,
       currentHour,
-      sunsetIso,
+      sun.sunset,
       now.toISOString(),
+      sun.sunrise,
     );
 
     return NextResponse.json(
@@ -43,10 +45,9 @@ export async function GET(req: NextRequest) {
         score,
         verdict: getVerdict(score),
         weather,
-        sun: {
-          sunset: sunsetIso,
-        },
-        peakToday: peak,
+        sun,
+        peakToday: findPeakToday(hourly),
+        hourly,
       },
       {
         status: 200,

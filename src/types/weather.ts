@@ -35,6 +35,17 @@ export type ForecastEntry = {
   };
 };
 
+export type HourlyPoint = {
+  time: string;
+  hour: string;
+  score: number;
+  temperature: number;
+  wind: number;
+  precipitation: number;
+  symbol: string;
+  night: boolean;
+};
+
 export type BergenResponse = {
   city: string;
   score: number;
@@ -51,9 +62,11 @@ export type BergenResponse = {
   };
   sun: {
     sunset: string | null;
+    sunrise: string | null;
   };
   peakToday: {
     time: string | null;
     score: number | null;
   };
+  hourly: HourlyPoint[];
 };

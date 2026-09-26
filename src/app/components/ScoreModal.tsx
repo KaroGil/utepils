@@ -18,29 +18,28 @@ interface ScoreModalProps {
   weather: WeatherData;
   score: number;
   hour: number;
+  sunsetIso?: string | null;
 }
 
 interface Step {
   label: string;
-  pts: number;
+  factor: number;
 }
 
 interface FactorConfig {
   icon: string;
   name: string;
   value: string;
-  points: number;
+  factor: number;
   steps: Step[];
   activeIndex: number;
 }
 
-function ptsStr(p: number) {
-  return p > 0 ? `+${p}` : `${p}`;
+function factorStr(factor: number) {
+  return `${Math.round(factor * 100)}%`;
 }
-function ptsColor(p: number) {
-  if (p > 0) return "text-emerald-600";
-  if (p < 0) return "text-rose-500";
-  return "text-slate-400";
+function factorColor(factor: number) {
+  return factor < 0.55 ? "text-rose-500" : "text-emerald-600";
 }
 
 function StepScale({
@@ -50,8 +49,8 @@ function StepScale({
   steps: Step[];
   activeIndex: number;
 }) {
-  const activeNeg = steps[activeIndex]?.pts < 0;
-  const activeColor = activeNeg ? "bg-rose-400" : "bg-emerald-400";
+  const activeLow = steps[activeIndex]?.factor < 0.55;
+  const activeColor = activeLow ? "bg-rose-400" : "bg-emerald-400";
 
   return (
     <div className="mt-3 pl-12">
@@ -70,7 +69,7 @@ function StepScale({
                 <div
                   className={`rounded-full flex-shrink-0 border-2 border-white z-10 ${
                     isActive
-                      ? `${activeNeg ? "bg-rose-400 outline-rose-400" : "bg-emerald-400 outline-emerald-400"} outline outline-2`
+                      ? `${activeLow ? "bg-rose-400 outline-rose-400" : "bg-emerald-400 outline-emerald-400"} outline outline-2`
                       : leftFilled
                         ? `${activeColor} outline-none`
                         : "bg-slate-200 outline-none"
@@ -87,9 +86,9 @@ function StepScale({
                   {s.label}
                 </p>
                 <p
-                  className={`text-[10px] leading-tight ${isActive ? (activeNeg ? "text-rose-500" : "text-emerald-600") + " font-medium" : "text-slate-500"}`}
+                  className={`text-[10px] leading-tight ${isActive ? (activeLow ? "text-rose-500" : "text-emerald-600") + " font-medium" : "text-slate-500"}`}
                 >
-                  {ptsStr(s.pts)}
+                  {factorStr(s.factor)}
                 </p>
               </div>
             </div>
@@ -104,7 +103,7 @@ function ScoreRing({ score }: { score: number }) {
   const r = 27;
   const circ = 2 * Math.PI * r;
   const offset = circ * (1 - score / 100);
-  const color = score >= 75 ? "#2c9b5e" : score >= 45 ? "#ca8a04" : "#c94040";
+  const color = score >= 80 ? "#2c9b5e" : score >= 45 ? "#ca8a04" : "#c94040";
 
   return (
     <div className="relative h-16 w-16 flex-shrink-0">
@@ -147,6 +146,7 @@ export default function ScoreModal({
   weather,
   score,
   hour,
+  sunsetIso,
 }: ScoreModalProps) {
   useEffect(() => {
     const fn = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -163,23 +163,24 @@ export default function ScoreModal({
 
   if (!isOpen) return null;
 
-  const tempPts = calculateTemperature(weather.temperature);
-  const windPts = calculateWind(weather.wind);
-  const precipPts = calculatePrecipitation(weather.precipitation);
-  const timePts = calculateTimeOfDay(hour);
-  const condPts = calculateCondition(weather.symbol);
+  const tempFactor = calculateTemperature(weather.temperature);
+  const windFactor = calculateWind(weather.wind);
+  const precipFactor = calculatePrecipitation(weather.precipitation);
+  const daylightFactor = calculateTimeOfDay(hour, sunsetIso);
+  const conditionFactor = calculateCondition(weather.symbol);
 
   function getTempActiveIndex(temp: number) {
-    if (temp < 5) return 0;
-    if (temp < 8) return 1;
-    if (temp < 15) return 2;
-    if (temp <= 22) return 3;
+    if (temp < 12) return 0;
+    if (temp < 18) return 1;
+    if (temp < 22) return 2;
+    if (temp <= 30) return 3;
     return 4;
   }
   function getCondActiveIndex(symbol: string) {
     const s = symbol.toLowerCase();
-    if (s.includes("rain") || s.includes("snow")) return 0;
-    if (s.includes("fog")) return 1;
+    if (s.includes("thunder") || s.includes("snow") || s.includes("sleet"))
+      return 0;
+    if (s.includes("rain") || s.includes("fog")) return 1;
     if (s.includes("cloudy") && !s.includes("partly")) return 2;
     if (s.includes("partlycloudy") || s.includes("fair")) return 3;
     return 4;
@@ -187,15 +188,14 @@ export default function ScoreModal({
   function getWindActiveIndex(wind: number) {
     if (wind >= 12) return 0;
     if (wind >= 8) return 1;
-    if (wind >= 5) return 2;
+    if (wind >= 4) return 2;
     return 3;
   }
   function getTimeActiveIndex(h: number) {
-    if (h < 10) return 0;
-    if (h < 12) return 1;
-    if (h < 16) return 2;
-    if (h < 22) return 3;
-    return 4;
+    if (h < 5 || h >= 23) return 0;
+    if (h < 7 || h >= 22) return 1;
+    if (h < 9) return 2;
+    return 3;
   }
 
   const factors: FactorConfig[] = [
@@ -203,41 +203,42 @@ export default function ScoreModal({
       icon: "🌡️",
       name: "Temperatur",
       value: `${weather.temperature}°C`,
-      points: tempPts,
+      factor: tempFactor,
       activeIndex: getTempActiveIndex(weather.temperature),
       steps: [
-        { label: "Under 5°C", pts: 0 },
-        { label: "5–8°C", pts: 10 },
-        { label: "8–15°C", pts: 20 },
-        { label: "15–22°C", pts: 35 },
-        { label: "Over 22°C", pts: 28 },
+        { label: "Under 12°C", factor: 0.5 },
+        { label: "12–18°C", factor: 0.75 },
+        { label: "18–22°C", factor: 0.95 },
+        { label: "22–30°C", factor: 1 },
+        { label: "Over 30°C", factor: 0.75 },
       ],
     },
     {
-      icon: condPts >= 20 ? "☀️" : condPts >= 5 ? "⛅" : "🌧️",
+      icon:
+        conditionFactor >= 0.75 ? "☀️" : conditionFactor >= 0.45 ? "⛅" : "🌧️",
       name: "Vær",
       value: getConditionLabel(weather.symbol),
-      points: condPts,
+      factor: conditionFactor,
       activeIndex: getCondActiveIndex(weather.symbol),
       steps: [
-        { label: "Regn/snø", pts: -25 },
-        { label: "Tåke", pts: -10 },
-        { label: "Overskyet", pts: 8 },
-        { label: "Delvis skyet", pts: 25 },
-        { label: "Klarvær", pts: 35 },
+        { label: "Snø/torden", factor: 0.25 },
+        { label: "Regn/tåke", factor: 0.35 },
+        { label: "Overskyet", factor: 0.45 },
+        { label: "Delvis skyet", factor: 0.75 },
+        { label: "Klarvær", factor: 1 },
       ],
     },
     {
       icon: weather.wind < 5 ? "🍃" : weather.wind < 12 ? "💨" : "🌬️",
       name: "Vind",
       value: `${weather.wind} m/s`,
-      points: windPts,
+      factor: windFactor,
       activeIndex: getWindActiveIndex(weather.wind),
       steps: [
-        { label: "Over 12 m/s", pts: -18 },
-        { label: "8–12 m/s", pts: -5 },
-        { label: "5–8 m/s", pts: 8 },
-        { label: "Under 5 m/s", pts: 15 },
+        { label: "Over 12 m/s", factor: 0.05 },
+        { label: "8–12 m/s", factor: 0.4 },
+        { label: "4–8 m/s", factor: 0.9 },
+        { label: "Under 4 m/s", factor: 1 },
       ],
     },
     {
@@ -245,25 +246,24 @@ export default function ScoreModal({
       name: "Nedbør",
       value:
         weather.precipitation === 0 ? "Tørt" : `${weather.precipitation} mm`,
-      points: precipPts,
-      activeIndex: weather.precipitation === 0 ? 1 : 0,
+      factor: precipFactor,
+      activeIndex: weather.precipitation >= 0.5 ? 0 : 1,
       steps: [
-        { label: "Nedbør", pts: -20 },
-        { label: "Tørt", pts: 10 },
+        { label: "0.5 mm/t eller mer", factor: 0.5 },
+        { label: "Lite eller ingen nedbør", factor: 1 },
       ],
     },
     {
       icon: hour >= 16 && hour < 22 ? "🍻" : hour >= 12 ? "🕐" : "🌅",
       name: "Tid på dagen",
       value: `${hour.toString().padStart(2, "0")}:${new Date().getMinutes().toString().padStart(2, "0")}`,
-      points: timePts,
+      factor: daylightFactor,
       activeIndex: getTimeActiveIndex(hour),
       steps: [
-        { label: "Før 10", pts: 0 },
-        { label: "10–12", pts: 6 },
-        { label: "12–16", pts: 12 },
-        { label: "16–22", pts: 25 },
-        { label: "Etter 22", pts: 10 },
+        { label: "Mørkt", factor: 0.1 },
+        { label: "Skumring", factor: 0.35 },
+        { label: "Dagslys", factor: 0.75 },
+        { label: "Godt dagslys", factor: 1 },
       ],
     },
   ];
@@ -296,7 +296,7 @@ export default function ScoreModal({
                   Utepils-score
                 </p>
                 <p className="text-xl font-semibold text-slate-900 leading-tight">
-                  {score >= 75
+                  {score >= 80
                     ? "Nå er det utepilstid!"
                     : score >= 45
                       ? "Det kan bli utepils"
@@ -337,9 +337,9 @@ export default function ScoreModal({
                     <p className="text-xs text-slate-400 mt-0.5">{f.value}</p>
                   </div>
                   <div
-                    className={`text-sm font-semibold tabular-nums pt-0.5 ${ptsColor(f.points)}`}
+                    className={`text-sm font-semibold tabular-nums pt-0.5 ${factorColor(f.factor)}`}
                   >
-                    {ptsStr(f.points)}
+                    {factorStr(f.factor)}
                   </div>
                 </div>
 
@@ -352,50 +352,10 @@ export default function ScoreModal({
           <div className="mt-4 flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
             <Sunset size={16} className="text-slate-400 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-slate-500 leading-relaxed">
-              <span className="font-medium text-slate-600">Solnedgang</span> kan
-              trekke ned scoren med opptil 20 poeng hvis du er innen én time fra
-              mørket – denne faktoren hentes fra API-et og vises ikke separat
-              ovenfor.
+              <span className="font-medium text-slate-600">Dagslys</span> er en
+              egen faktor. Den reduseres gradvis mot mørket og inngår sammen med
+              temperatur, vind, vær og nedbør i den samlede scoren.
             </p>
-          </div>
-
-          {/* Best possible */}
-          <div className="mt-3 rounded-2xl bg-slate-50 p-4">
-            <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3">
-              Beste mulige score eksempel
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { label: "Temperatur", value: "15–22°C", pts: 35 },
-                { label: "Vær", value: "Klarvær", pts: 35 },
-                { label: "Vind", value: "Under 5 m/s", pts: 15 },
-                { label: "Nedbør", value: "Tørt", pts: 10 },
-                { label: "Tid", value: "Kl. 16–22", pts: 25 },
-              ].map((item) => (
-                <div
-                  key={item.label}
-                  className="flex items-center justify-between rounded-xl bg-white border border-slate-100 px-3 py-2"
-                >
-                  <div>
-                    <p className="text-[11px] font-medium text-slate-500">
-                      {item.label}
-                    </p>
-                    <p className="text-xs text-slate-400">{item.value}</p>
-                  </div>
-                  <span className="text-sm font-semibold text-emerald-600">
-                    +{item.pts}
-                  </span>
-                </div>
-              ))}
-              <div className="flex items-center justify-between rounded-xl bg-emerald-50 border border-emerald-100 px-3 py-2">
-                <p className="text-[11px] font-medium text-emerald-700">
-                  Maks total
-                </p>
-                <span className="text-sm font-semibold text-emerald-600">
-                  100%
-                </span>
-              </div>
-            </div>
           </div>
         </div>
       </div>

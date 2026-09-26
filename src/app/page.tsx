@@ -1,27 +1,25 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { HelpCircle } from "lucide-react";
-import InfoCard from "./components/InfoCard";
-import ReasonRow from "./components/ReasonRow";
+import { CalendarDays } from "lucide-react";
 import Forecast from "./components/forcast";
 import LoadingScreen from "./components/LoadingScreen";
-import ScoreModal from "./components/ScoreModal";
+import Footer from "./components/Footer";
+import ScoreBackground from "./components/ScoreBackground";
+import HourlyScoreChart from "./components/HourlyScoreChart";
+import LocationSelector from "./components/LocationSelector";
+import ScoreSummary from "./components/ScoreSummary";
+import ScoreFactors from "./components/ScoreFactors";
 import NorwegianFlagsBackground from "./components/norwegianFlags";
 import { BergenResponse, WeatherData } from "@/types/weather";
-import {
-  getBackgroundClass,
-  getMeterColor,
-  getConditionLabel,
-} from "../lib/calculations";
-import { isSeventeenthOfMay } from "@/lib/time";
+import { getOsloHour, isSeventeenthOfMay } from "@/lib/time";
 import { cities } from "@/lib/cities";
 
 type LocationMode = "bergen" | "oslo" | "local";
 
 export default function Page() {
   const now = new Date();
-  const hour = now.getHours();
+  const hour = getOsloHour(now);
 
   const [isLoading, setIsLoading] = useState(true);
   const [locationMode, setLocationMode] = useState<LocationMode>("bergen");
@@ -42,7 +40,6 @@ export default function Page() {
   });
 
   const [showForecast, setShowForecast] = useState(false);
-  const [showModal, setShowModal] = useState(false);
 
   /*
    * Get the user's coordinates when "Min posisjon" is selected.
@@ -138,203 +135,75 @@ export default function Page() {
     };
   }, [locationMode, coords]);
 
-  const backgroundClass = getBackgroundClass(activeData?.score ?? 0);
-
-  const meterColor = getMeterColor(activeData?.score ?? 0);
-  const conditionLabel = getConditionLabel(weather.symbol);
-
-  if (isLoading) {
-    return <LoadingScreen />;
-  }
-
   return (
-    <main
-      className={`min-h-screen bg-linear-to-br ${backgroundClass} text-slate-900`}
-    >
+    <main className="min-h-screen overflow-hidden px-4 py-3 text-slate-900 sm:px-8 sm:py-5">
+      <ScoreBackground score={activeData?.score ?? null} />
+
       {isSeventeenthOfMay(new Date().toISOString()) && (
         <NorwegianFlagsBackground />
       )}
 
-      <button
-        type="button"
-        className="absolute top-4 right-4 flex flex-col gap-1 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed"
-        onClick={() => {
-          setShowForecast((previous) => !previous);
-        }}
-        aria-label="Vis eller skjul værmelding"
-      >
-        <span className="h-0.5 w-3 bg-slate-900" />
-        <span className="h-0.5 w-3 bg-slate-900" />
-        <span className="h-0.5 w-3 bg-slate-900" />
-      </button>
+      <div className="relative z-10 mx-auto max-w-5xl">
+        <header className="mb-4 flex flex-col gap-3 border-b border-slate-300/50 pb-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-baseline gap-3">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-[var(--ink)]">
+              Utepils-meter
+            </p>
+          </div>
 
-      <div className="flex items-center gap-3 p-3">
-        <label htmlFor="location" className="text-sm font-medium">
-          📌 Sted
-        </label>
+          <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:gap-2">
+            <LocationSelector value={locationMode} onChange={setLocationMode} />
+            <button
+              type="button"
+              onClick={() => setShowForecast((previous) => !previous)}
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300/80 bg-white/70 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-400 hover:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--coral)]"
+              aria-expanded={showForecast}
+            >
+              <CalendarDays size={16} />
+              {showForecast ? "Skjul prognose" : "Se 7-dagers prognose"}
+            </button>
+          </div>
+        </header>
 
-        <select
-          id="location"
-          value={locationMode}
-          onChange={(event) => {
-            setLocationMode(event.target.value as LocationMode);
-          }}
-          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-300"
-        >
-          <option value="bergen">Bergen</option>
-          <option value="oslo">Oslo</option>
-          <option value="local">Min posisjon</option>
-        </select>
+        {showForecast && (
+          <div className="animate-rise-in border-b border-slate-300/50 pb-8 pt-4">
+            <Forecast locationMode={locationMode} coords={coords} />
+          </div>
+        )}
+
+        {isLoading ? (
+          <LoadingScreen />
+        ) : (
+          <div className="pb-12">
+            <div className="animate-rise-in pt-4 sm:pt-8">
+              <ScoreSummary
+                data={activeData}
+                weather={weather}
+                time={now.toLocaleTimeString("no-NO", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              />
+            </div>
+
+            <div className="animate-rise-in-delay mt-12 border-t border-slate-300/50 pt-8 sm:mt-16">
+              <HourlyScoreChart hourly={activeData?.hourly ?? []} />
+            </div>
+
+            <div className="animate-rise-in-delay my-10 border-t border-slate-300/50 pt-8">
+              <ScoreFactors
+                score={activeData?.score ?? 0}
+                weather={weather}
+                hour={hour}
+                sunset={activeData?.sun.sunset ?? null}
+                sunrise={activeData?.sun.sunrise ?? null}
+              />
+            </div>
+          </div>
+        )}
+
+        <Footer />
       </div>
-
-      {showForecast && <Forecast locationMode={locationMode} coords={coords} />}
-
-      <div
-        className={`mx-auto flex ${
-          !showForecast ? "min-h-screen" : ""
-        } max-w-337.5 items-center justify-center p-6`}
-      >
-        <div className="grid w-full gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <section className="self-center rounded-4xl bg-white/70 p-8 shadow-2xl backdrop-blur-xl">
-            <div className="mb-8 flex items-start justify-between gap-4">
-              <div>
-                <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-slate-600">
-                  Utepils-meter
-                </p>
-
-                <h1 className="text-4xl font-black tracking-tight sm:text-6xl">
-                  {activeData?.verdict.title}
-                </h1>
-
-                <p className="mt-3 max-w-xl text-lg text-slate-700">
-                  {activeData?.verdict.subtitle}
-                </p>
-              </div>
-
-              <div className="text-5xl sm:text-6xl">
-                {activeData?.verdict.emoji}
-              </div>
-            </div>
-
-            <div className="mb-6 rounded-3xl bg-slate-900 p-6 text-white shadow-lg">
-              <div className="flex items-end justify-between gap-4">
-                <div>
-                  <p className="text-sm uppercase tracking-[0.2em] text-slate-300">
-                    Utepils-score
-                  </p>
-
-                  <p className="text-6xl font-black">{activeData?.score}%</p>
-                </div>
-
-                <div className="text-right text-sm text-slate-300">
-                  <p>{weather.city}</p>
-
-                  <p>
-                    {now.toLocaleTimeString("no-NO", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-5 h-4 w-full rounded-full bg-white/15">
-                <div
-                  className={`h-4 rounded-full ${meterColor} transition-all duration-700`}
-                  style={{
-                    width: `${activeData?.score ?? 0}%`,
-                  }}
-                />
-              </div>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <InfoCard label="Temperatur" value={`${weather.temperature}°C`} />
-
-              <InfoCard label="Vind" value={`${weather.wind} m/s`} />
-
-              <InfoCard label="Vær" value={conditionLabel} />
-
-              <InfoCard label="Nedbør" value={`${weather.precipitation} mm`} />
-            </div>
-          </section>
-
-          <aside className="rounded-4xl bg-white/60 p-8 shadow-2xl backdrop-blur-xl">
-            <div className="mb-4 flex flex-row items-center justify-between gap-2">
-              <h2 className="text-2xl font-bold">
-                Hvorfor fikk du denne scoren?
-              </h2>
-
-              <HelpCircle
-                size={22}
-                className="cursor-pointer text-gray-400 transition-colors hover:text-gray-600"
-                onClick={() => setShowModal(true)}
-              />
-            </div>
-
-            <div className="mt-6 space-y-4">
-              <ReasonRow
-                title="Temperatur"
-                value={`${weather.temperature}°C`}
-                description={
-                  weather.temperature >= 15 && weather.temperature <= 22
-                    ? "Perfekt temperatur for å sitte ute lenge"
-                    : weather.temperature < 15
-                      ? "Litt kjølig, men ikke umulig"
-                      : "Varmt nok til god stemning"
-                }
-              />
-
-              <ReasonRow
-                title="Tid på dagen"
-                value={`${now.getHours().toString().padStart(2, "0")}:${now
-                  .getMinutes()
-                  .toString()
-                  .padStart(2, "0")}`}
-                description={
-                  hour >= 16 && hour < 22
-                    ? "Prime time for utepils"
-                    : hour >= 12
-                      ? "Det nærmer seg, men ikke helt peak ennå"
-                      : "Fortsatt litt tidlig for full utepilsfølelse"
-                }
-              />
-
-              <ReasonRow
-                title="Vind og nedbør"
-                value={`${weather.wind} m/s`}
-                description={
-                  weather.wind < 5 && weather.precipitation === 0
-                    ? "Lite vind og tørt vær trekker opp stemningen"
-                    : "Vind eller nedbør trekker stemningen ned"
-                }
-              />
-
-              <ReasonRow
-                title="Peak i dag"
-                value={
-                  activeData?.peakToday?.time
-                    ? `Kl. ${activeData.peakToday.time}`
-                    : "—"
-                }
-                description={
-                  activeData?.peakToday?.score != null
-                    ? `Beste estimerte utepilsstemning i dag er rundt dette tidspunktet (${activeData.peakToday.score}%).`
-                    : "Fant ikke noe tydelig peak-tidspunkt i dag."
-                }
-              />
-            </div>
-          </aside>
-        </div>
-      </div>
-
-      <ScoreModal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        weather={weather}
-        score={activeData?.score ?? 0}
-        hour={hour}
-      />
     </main>
   );
 }

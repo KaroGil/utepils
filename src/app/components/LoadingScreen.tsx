@@ -1,64 +1,59 @@
+function Bar({ className }: { className: string }) {
+  return (
+    <div
+      className={`animate-pulse rounded-full bg-slate-300/60 dark:bg-white/10 ${className}`}
+    />
+  );
+}
+
+const CHART_BARS = [
+  40, 48, 55, 62, 70, 74, 72, 66, 58, 50, 42, 35, 30, 28, 30, 36, 44, 52,
+];
+
 export default function LoadingScreen() {
   return (
-    <main className="min-h-screen bg-linear-to-br from-slate-200 via-slate-100 to-zinc-100 text-slate-900">
-      <div className="mx-auto flex min-h-screen max-w-337.5 items-center justify-center p-6">
-        <div className="grid w-full gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <section className="rounded-4xl bg-white/70 p-8 shadow-2xl backdrop-blur-xl">
-            <div className="animate-pulse">
-              <div className="mb-2 h-4 w-40 rounded-full bg-slate-200" />
-              <div className="mb-4 h-16 w-96 max-w-full rounded-2xl bg-slate-300" />
-              <div className="h-6 w-80 max-w-full rounded-xl bg-slate-200" />
+    <div className="pb-12" role="status" aria-live="polite">
+      <span className="sr-only">Henter utepilsdata…</span>
 
-              <div className="mt-8 rounded-3xl bg-slate-900 p-6 shadow-lg">
-                <div className="flex items-end justify-between gap-4">
-                  <div>
-                    <div className="mb-3 h-4 w-28 rounded-full bg-slate-700" />
-                    <div className="h-16 w-28 rounded-2xl bg-slate-700" />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="h-4 w-20 rounded-full bg-slate-700" />
-                    <div className="h-4 w-16 rounded-full bg-slate-700" />
-                  </div>
-                </div>
+      <section className="animate-rise-in relative pt-4 sm:pt-8">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-10 -top-8 h-64 w-64 animate-pulse rounded-full bg-[var(--mint)]/50 blur-3xl"
+        />
 
-                <div className="mt-5 h-4 w-full rounded-full bg-white/15">
-                  <div className="h-4 w-1/3 rounded-full bg-slate-500" />
-                </div>
-              </div>
+        <p className="relative text-xs font-bold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-300">
+          Akkurat nå
+        </p>
+        <Bar className="mt-4 h-10 w-3/4 max-w-xl rounded-2xl sm:h-14" />
+        <Bar className="mt-4 h-4 w-1/2 max-w-sm" />
 
-              <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                {[...Array(4)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="rounded-3xl bg-white/80 p-6 shadow-md"
-                  >
-                    <div className="mb-4 h-4 w-24 rounded-full bg-slate-200" />
-                    <div className="h-8 w-20 rounded-xl bg-slate-300" />
-                  </div>
-                ))}
-              </div>
+        <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:gap-10">
+          <Bar className="h-18 w-36 rounded-3xl sm:h-24 sm:w-44" />
+          <div className="flex-1 sm:pb-2">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-300/50 dark:bg-white/10">
+              <div className="animate-loading-bar h-2 w-1/3 rounded-full bg-[var(--ink)]/60" />
             </div>
-          </section>
-
-          <aside className="rounded-4xl bg-white/60 p-8 shadow-2xl backdrop-blur-xl">
-            <div className="animate-pulse">
-              <div className="h-8 w-72 rounded-2xl bg-slate-300" />
-              <div className="mt-6 space-y-4">
-                {[...Array(4)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="rounded-2xl bg-white/70 p-4 shadow-sm"
-                  >
-                    <div className="mb-3 h-5 w-32 rounded-full bg-slate-300" />
-                    <div className="mb-2 h-4 w-20 rounded-full bg-slate-200" />
-                    <div className="h-4 w-full rounded-full bg-slate-200" />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </aside>
+            <Bar className="mt-4 h-4 w-2/3" />
+          </div>
         </div>
-      </div>
-    </main>
+      </section>
+
+      <section className="animate-rise-in-delay mt-12 border-t border-slate-300/50 pt-8 sm:mt-16">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-300">
+          Neste 24 timer
+        </p>
+        <Bar className="mt-2 h-7 w-72 max-w-full rounded-xl" />
+
+        <div className="mt-8 flex h-48 items-end gap-1.5">
+          {CHART_BARS.map((height, i) => (
+            <div
+              key={i}
+              className="flex-1 animate-pulse rounded-t-lg bg-[var(--mint)]/50"
+              style={{ height: `${height}%`, animationDelay: `${i * 60}ms` }}
+            />
+          ))}
+        </div>
+      </section>
+    </div>
   );
 }

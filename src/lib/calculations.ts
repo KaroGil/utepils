@@ -1,69 +1,119 @@
 import { ForecastPoint } from "@/types/weather";
 import { isSeventeenthOfMay } from "@/lib/time";
 
+const OPTIMAL_TEMPERATURE = 22;
+const COLD_TEMPERATURE_SCALE = 12;
+const WARM_TEMPERATURE_SCALE = 15;
+const WIND_SCALE = 8;
+const PRECIPITATION_HALF_SCORE = 0.5;
+
+function clamp(value: number, min = 0, max = 1) {
+  return Math.min(max, Math.max(min, value));
+}
+
 export function calculateTemperature(temperature: number) {
-  if (temperature < 5) return 0;
-  if (temperature < 8) return 10;
-  if (temperature < 15) return 20;
-  if (temperature <= 22) return 35;
-  if (temperature > 37) return 20;
-  return 28;
+  const scale =
+    temperature < OPTIMAL_TEMPERATURE
+      ? COLD_TEMPERATURE_SCALE
+      : WARM_TEMPERATURE_SCALE;
+
+  return clamp(Math.exp(-(((temperature - OPTIMAL_TEMPERATURE) / scale) ** 2)));
 }
 
 export function calculateCondition(symbol?: string) {
-  if (!symbol) return 0;
+  if (!symbol) return 0.45;
 
-  const s = symbol.toLowerCase();
+  const normalized = symbol.toLowerCase();
 
-  // 🌧 Rain (worst)
-  if (s.includes("rain")) return -25;
-
-  // ❄️ Snow (also bad)
-  if (s.includes("snow")) return -20;
-
-  // 🌫 Fog
-  if (s.includes("fog")) return -10;
-
-  // ☀️ Clear sky
-  if (s.includes("clearsky")) {
-    if (s.includes("night")) return 15; // less good than day
-    return 35;
+  if (normalized.includes("thunder")) return 0.25;
+  if (normalized.includes("snow")) return 0.25;
+  if (normalized.includes("rain")) return 0.35;
+  if (normalized.includes("sleet")) return 0.25;
+  if (normalized.includes("fog")) return 0.35;
+  if (normalized.includes("clearsky")) {
+    return normalized.includes("night") ? 0.6 : 1;
+  }
+  if (normalized.includes("fair")) {
+    return normalized.includes("night") ? 0.55 : 0.85;
+  }
+  if (normalized.includes("partlycloudy")) {
+    return normalized.includes("night") ? 0.55 : 0.75;
   }
 
-  // 🌤 Fair (nice but not perfect)
-  if (s.includes("fair")) {
-    if (s.includes("night")) return 8;
-    return 20;
-  }
-
-  // ⛅ Partly cloudy
-  if (s.includes("partlycloudy")) {
-    if (s.includes("night")) return 5;
-    return 25;
-  }
-
-  // ☁️ Default cloudy
-  return 8;
+  return 0.45;
 }
 
 export function calculateWind(wind: number) {
-  if (wind < 5) return 15;
-  if (wind < 8) return 8;
-  if (wind < 12) return -5;
-  return -18;
+  return clamp(Math.exp(-(Math.max(0, wind / WIND_SCALE) ** 4)));
 }
 
 export function calculatePrecipitation(precipitation: number) {
-  if (precipitation > 0) return -20;
-  return 10;
+  const amount = Math.max(0, precipitation);
+  return clamp(1 / (1 + (amount / PRECIPITATION_HALF_SCORE) ** 2));
 }
 
-export function calculateTimeOfDay(hour: number) {
-  if (hour < 10) return 0;
-  if (hour < 12) return 6;
-  if (hour < 16) return 12;
-  if (hour < 22) return 25;
-  return 10;
+/* Oslo clock time of an ISO timestamp as decimal hours, e.g. 19.5. */
+function toOsloDecimalHour(iso: string | null | undefined, fallback: number) {
+  if (!iso) return fallback;
+
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return fallback;
+
+  const [hours, minutes] = date
+    .toLocaleTimeString("en-GB", {
+      timeZone: "Europe/Oslo",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    })
+    .split(":")
+    .map(Number);
+
+  return hours + minutes / 60;
+}
+
+/*
+ * Dark until an hour before sunrise, ramps up to full daylight an hour
+ * after sunrise, and mirrors that around sunset.
+ */
+export function calculateDaylight(
+  hour: number,
+  sunsetIso?: string | null,
+  sunriseIso?: string | null,
+) {
+  const sunriseHour = toOsloDecimalHour(sunriseIso, 6);
+  const sunsetHour = toOsloDecimalHour(sunsetIso, 22);
+
+  const morning =
+    hour < sunriseHour - 1
+      ? 0.1
+      : hour < sunriseHour + 1
+        ? 0.35 + ((hour - (sunriseHour - 1)) / 2) * 0.65
+        : 1;
+
+  const evening =
+    hour >= sunsetHour + 1
+      ? 0.1
+      : hour <= sunsetHour - 1
+        ? 1
+        : 1 - ((hour - (sunsetHour - 1)) / 2) * 0.65;
+
+  return Math.min(morning, evening);
+}
+
+function geometricMean(factors: number[]) {
+  return (
+    factors.reduce((product, factor) => product * clamp(factor), 1) **
+    (1 / factors.length)
+  );
+}
+
+export function calculateTimeOfDay(
+  hour: number,
+  sunsetIso?: string | null,
+  sunriseIso?: string | null,
+) {
+  return calculateDaylight(hour, sunsetIso, sunriseIso);
 }
 
 export function calculateUtepilsScore(
@@ -74,36 +124,25 @@ export function calculateUtepilsScore(
   hour: number,
   sunsetIso?: string | null,
   currentIso?: string,
+  sunriseIso?: string | null,
 ) {
   if (currentIso && isSeventeenthOfMay(currentIso)) {
     return 100;
   }
 
-  let score = 0;
-
-  score += calculateTemperature(temperature);
-  score += calculateCondition(symbol);
-  score += calculateWind(wind);
-  score += calculatePrecipitation(precipitation);
-  score += calculateTimeOfDay(hour);
-
-  if (sunsetIso && currentIso) {
-    const now = new Date(currentIso);
-    const sunset = new Date(sunsetIso);
-
-    const diffMinutes = (sunset.getTime() - now.getTime()) / (1000 * 60);
-
-    if (diffMinutes < 0) {
-      score -= 20;
-    } else if (diffMinutes <= 60) {
-      score -= 8;
-    }
-  }
-
-  return Math.max(0, Math.min(100, score));
+  return Math.round(
+    100 *
+      geometricMean([
+        calculateTemperature(temperature),
+        calculateWind(wind),
+        calculateCondition(symbol),
+        calculatePrecipitation(precipitation),
+        calculateTimeOfDay(hour, sunsetIso, sunriseIso),
+      ]),
+  );
 }
 
-export const BEST_TIME_OF_DAY_BONUS = 25;
+export const BEST_TIME_OF_DAY_BONUS = 0;
 
 export function calculateUtepilsScoreWithoutTime(
   temperature: number,
@@ -111,14 +150,15 @@ export function calculateUtepilsScoreWithoutTime(
   condition: string,
   precipitation: number,
 ) {
-  let score = 0;
-
-  score += calculateTemperature(temperature);
-  score += calculateCondition(condition);
-  score += calculateWind(wind);
-  score += calculatePrecipitation(precipitation);
-
-  return Math.max(0, Math.min(100, score));
+  return Math.round(
+    100 *
+      geometricMean([
+        calculateTemperature(temperature),
+        calculateWind(wind),
+        calculateCondition(condition),
+        calculatePrecipitation(precipitation),
+      ]),
+  );
 }
 
 export function getVerdict(score: number) {
@@ -130,11 +170,27 @@ export function getVerdict(score: number) {
     };
   }
 
-  if (score >= 75) {
+  if (score >= 90) {
+    return {
+      title: "UTEPILS IDYLL! ☀️🍻",
+      subtitle: "Eksepsjonelle utepilsforhold",
+      emoji: "😎",
+    };
+  }
+
+  if (score >= 80) {
     return {
       title: "UTEPILS! 🍻",
-      subtitle: "Nå er det bare å komme seg ut",
-      emoji: "☀️",
+      subtitle: "Svært gode forhold",
+      emoji: "🍻",
+    };
+  }
+
+  if (score >= 65) {
+    return {
+      title: "Hvem blir med på utepils? 🙂‍↕️",
+      subtitle: "Planlegg utepils",
+      emoji: "🍺",
     };
   }
 
@@ -143,6 +199,14 @@ export function getVerdict(score: number) {
       title: "Det kan bli utepils 😌",
       subtitle: "Litt situasjonsavhengig, men absolutt mulig",
       emoji: "⛅",
+    };
+  }
+
+  if (score >= 25) {
+    return {
+      title: "Kun for de mest motiverte",
+      subtitle: "Velg et skjermet sted og kle deg etter forholdene",
+      emoji: "🌧️",
     };
   }
 
@@ -260,6 +324,22 @@ export function getForecastEmoji(score: number) {
   if (score >= 65) return "🍺🤏";
   if (score >= 45) return "😢";
   return "🍺🥶";
+}
+
+export function getWeatherEmoji(symbol: string, night = false) {
+  const normalized = symbol.toLowerCase();
+  const isNight = night || normalized.includes("night");
+
+  if (normalized.includes("thunder")) return "⛈️";
+  if (normalized.includes("snow")) return "❄️";
+  if (normalized.includes("sleet")) return "🌨️";
+  if (normalized.includes("rain")) return "🌧️";
+  if (normalized.includes("fog")) return "🌫️";
+  if (normalized.includes("clearsky")) return isNight ? "🌙" : "☀️";
+  if (normalized.includes("fair")) return isNight ? "🌙" : "🌤️";
+  if (normalized.includes("partlycloudy")) return isNight ? "☁️" : "⛅";
+
+  return "☁️";
 }
 
 export function getNextGoodUtepilsDay(forecast: ForecastPoint[]) {
