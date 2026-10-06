@@ -2,30 +2,7 @@ import { calculateUtepilsScore } from "@/lib/calculations";
 import { mapSymbolToCondition } from "@/lib/conditions";
 import { TIMEZONE } from "@/lib/time";
 import type { SunTimes } from "@/lib/sun";
-import type { ForecastPoint } from "@/types/weather";
-
-type ForecastEntry = {
-  time?: string;
-  data?: {
-    instant?: {
-      details?: {
-        air_temperature?: number;
-        wind_speed?: number;
-      };
-    };
-    next_1_hours?: ForecastPeriod;
-    next_6_hours?: ForecastPeriod;
-  };
-};
-
-type ForecastPeriod = {
-  details?: {
-    precipitation_amount?: number;
-  };
-  summary?: {
-    symbol_code?: string;
-  };
-};
+import type { ForecastEntry, ForecastPoint } from "@/types/weather";
 
 function getForecastPoint(
   entry: ForecastEntry,

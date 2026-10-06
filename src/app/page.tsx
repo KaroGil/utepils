@@ -243,8 +243,8 @@ export default function Page() {
                 score={activeData?.score ?? 0}
                 weather={weather}
                 hour={hour}
-                sunset={activeData?.sun.sunset ?? null}
-                sunrise={activeData?.sun.sunrise ?? null}
+                sunset={activeData?.sun?.sunset ?? null}
+                sunrise={activeData?.sun?.sunrise ?? null}
               />
             </div>
           </div>

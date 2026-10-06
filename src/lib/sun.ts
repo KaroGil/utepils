@@ -10,8 +10,9 @@ export async function fetchSunTimes(
 ): Promise<SunTimes> {
   const url = `https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lon}&date=${date}&formatted=0`;
 
+  // Sun times for a given date never change.
   const res = await fetch(url, {
-    cache: "no-store",
+    next: { revalidate: 86400 },
   });
 
   if (!res.ok) {
