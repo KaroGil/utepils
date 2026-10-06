@@ -49,7 +49,7 @@ export type HourlyPoint = {
   night: boolean;
 };
 
-export type BergenResponse = {
+export type UtepilsResponse = {
   city: string;
   score: number;
   verdict: {

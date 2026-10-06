@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CalendarDays, RotateCw } from "lucide-react";
-import Forecast from "./components/forcast";
+import Forecast from "./components/Forecast";
 import LoadingScreen from "./components/LoadingScreen";
 import Footer from "./components/Footer";
 import ScoreBackground from "./components/ScoreBackground";
@@ -11,7 +11,7 @@ import LocationSelector from "./components/LocationSelector";
 import ScoreSummary from "./components/ScoreSummary";
 import ScoreFactors from "./components/ScoreFactors";
 import NorwegianFlagsBackground from "./components/norwegianFlags";
-import { BergenResponse, WeatherData } from "@/types/weather";
+import { UtepilsResponse, WeatherData } from "@/types/weather";
 import { getOsloHour, isSeventeenthOfMay } from "@/lib/time";
 import { cities } from "@/lib/cities";
 import { LocationMode } from "@/lib/locations";
@@ -23,7 +23,7 @@ export default function Page() {
   const [isLoading, setIsLoading] = useState(true);
   const [locationMode, setLocationMode] = useState<LocationMode>("bergen");
 
-  const [activeData, setActiveData] = useState<BergenResponse | null>(null);
+  const [activeData, setActiveData] = useState<UtepilsResponse | null>(null);
 
   const [coords, setCoords] = useState<{
     lat: number;
