@@ -1,8 +1,17 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f4f1ea;
+  --foreground: #17212b;
+  --ink: #17212b;
+  --mint: #b9e4d0;
+  --coral: #f47f66;
+  --paper: #fbfaf7;
+  --surface: rgba(255, 255, 255, 0.72);
+  --surface-muted: rgba(255, 255, 255, 0.58);
+  --control-active-bg: #17212b;
+  --control-active-text: #ffffff;
 }
 
 @theme inline {
@@ -12,17 +21,56 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color-scheme: light;
+  font-family: var(--font-geist-sans), sans-serif;
+}
+
+::selection {
+  background: var(--coral);
+  color: white;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-rise-in {
+  animation: rise-in 600ms ease-out both;
+}
+
+.animate-rise-in-delay {
+  animation: rise-in 600ms 120ms ease-out both;
+}
+
+@keyframes loading-bar {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}
+
+.animate-loading-bar {
+  animation: loading-bar 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-loading-bar,
+  .animate-bounce,
+  .animate-pulse {
+    animation: none;
+  }
 }
 
 @keyframes norway-float {
