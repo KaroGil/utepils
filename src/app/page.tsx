@@ -14,8 +14,7 @@ import NorwegianFlagsBackground from "./components/norwegianFlags";
 import { BergenResponse, WeatherData } from "@/types/weather";
 import { getOsloHour, isSeventeenthOfMay } from "@/lib/time";
 import { cities } from "@/lib/cities";
-
-type LocationMode = "bergen" | "oslo" | "local";
+import { LocationMode } from "@/lib/locations";
 
 export default function Page() {
   const now = new Date();

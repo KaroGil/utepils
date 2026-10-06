@@ -10,8 +10,7 @@ import LoadingScreen from "../components/LoadingScreen";
 import NorwegianFlagsBackground from "../components/norwegianFlags";
 import { isSeventeenthOfMay } from "@/lib/time";
 import { cities } from "@/lib/cities";
-
-type LocationMode = "bergen" | "oslo" | "local";
+import { LocationMode, locationLabels, locationModes } from "@/lib/locations";
 
 export default function Page() {
   const now = new Date();
@@ -149,9 +148,11 @@ export default function Page() {
           }}
           className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-300"
         >
-          <option value="bergen">Bergen</option>
-          <option value="oslo">Oslo</option>
-          <option value="local">Min posisjon</option>
+          {locationModes.map((mode) => (
+            <option key={mode} value={mode}>
+              {locationLabels[mode]}
+            </option>
+          ))}
         </select>
       </div>
 

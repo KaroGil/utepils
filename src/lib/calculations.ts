@@ -142,8 +142,6 @@ export function calculateUtepilsScore(
   );
 }
 
-export const BEST_TIME_OF_DAY_BONUS = 0;
-
 export function calculateUtepilsScoreWithoutTime(
   temperature: number,
   wind: number,

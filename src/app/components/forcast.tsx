@@ -7,6 +7,7 @@ import {
   getNextGoodUtepilsDay,
 } from "../../lib/calculations";
 import { getOsloDayKey } from "@/lib/time";
+import { LocationMode } from "@/lib/locations";
 
 function getWeekday(date: string) {
   return new Date(date).toLocaleDateString("no-NO", {
@@ -14,8 +15,6 @@ function getWeekday(date: string) {
     timeZone: "UTC",
   });
 }
-
-type LocationMode = "bergen" | "oslo" | "local";
 
 interface ForecastProps {
   locationMode: LocationMode;

@@ -1,8 +1,7 @@
 "use client";
 
 import { Crosshair, MapPin } from "lucide-react";
-
-type LocationMode = "bergen" | "oslo" | "local";
+import { LocationMode, locationLabels, locationModes } from "@/lib/locations";
 
 interface LocationSelectorProps {
   value: LocationMode;
@@ -21,11 +20,7 @@ export default function LocationSelector({
       </span>
 
       <div className="flex w-full gap-0.5 rounded-xl border sm:inline-flex sm:w-fit border-slate-200/80 bg-[var(--surface)] p-0.5 shadow-sm backdrop-blur dark:border-white/10">
-        {[
-          ["bergen", "Bergen"],
-          ["oslo", "Oslo"],
-          ["local", "Min posisjon"],
-        ].map(([mode, label]) => {
+        {locationModes.map((mode) => {
           const selected = value === mode;
 
           return (
@@ -33,7 +28,7 @@ export default function LocationSelector({
               key={mode}
               type="button"
               aria-pressed={selected}
-              onClick={() => onChange(mode as LocationMode)}
+              onClick={() => onChange(mode)}
               className={`inline-flex flex-1 items-center justify-center whitespace-nowrap rounded-[10px] px-2 py-2.5 text-sm font-semibold sm:flex-none sm:px-3 sm:py-2 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--coral)] ${
                 selected
                   ? "bg-[var(--control-active-bg)] text-[var(--control-active-text)] shadow-sm"
@@ -43,7 +38,7 @@ export default function LocationSelector({
               {mode === "local" && (
                 <Crosshair size={14} className="mr-1.5 shrink-0" />
               )}
-              {label}
+              {locationLabels[mode]}
             </button>
           );
         })}
