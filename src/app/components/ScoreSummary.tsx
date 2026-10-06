@@ -1,9 +1,6 @@
 import type { BergenResponse, WeatherData } from "@/types/weather";
-import {
-  getConditionLabel,
-  getMeterColor,
-  getWeatherEmoji,
-} from "@/lib/calculations";
+import { getMeterColor } from "@/lib/calculations";
+import { getConditionLabel, getWeatherEmoji } from "@/lib/conditions";
 
 interface ScoreSummaryProps {
   data: BergenResponse | null;

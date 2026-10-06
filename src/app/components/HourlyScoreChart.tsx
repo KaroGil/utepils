@@ -2,70 +2,15 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { HourlyPoint } from "@/types/weather";
-import {
-  getConditionLabel,
-  getVerdict,
-  getWeatherEmoji,
-} from "@/lib/calculations";
+import { getConditionLabel, getWeatherEmoji } from "@/lib/conditions";
+import { getNightRuns, smoothPath } from "@/lib/chart";
 import { getOsloDayKey } from "@/lib/time";
+import HourlyTooltip from "./HourlyTooltip";
 
 const HEIGHT = 260;
 const PAD = { top: 56, right: 12, bottom: 30, left: 34 };
 const UTEPILS_ZONE = 65;
 const MIN_LABEL_GAP = 30;
-
-type Point = { x: number; y: number };
-
-/*
- * Smooth line through the points that never overshoots them
- * (monotone cubic), so the curve can't dip below 0% or above 100%.
- */
-function smoothPath(points: Point[]) {
-  if (points.length === 0) return "";
-  if (points.length === 1) return `M${points[0].x},${points[0].y}`;
-
-  const slopes = points
-    .slice(0, -1)
-    .map((p, i) => (points[i + 1].y - p.y) / (points[i + 1].x - p.x));
-
-  const tangents = points.map((_, i) => {
-    if (i === 0) return slopes[0];
-    if (i === points.length - 1) return slopes[i - 1];
-
-    const [a, b] = [slopes[i - 1], slopes[i]];
-    return a * b <= 0 ? 0 : 2 / (1 / a + 1 / b);
-  });
-
-  let d = `M${points[0].x},${points[0].y}`;
-
-  for (let i = 0; i < points.length - 1; i++) {
-    const p0 = points[i];
-    const p1 = points[i + 1];
-    const dx = (p1.x - p0.x) / 3;
-
-    d += ` C${p0.x + dx},${p0.y + tangents[i] * dx} ${p1.x - dx},${p1.y - tangents[i + 1] * dx} ${p1.x},${p1.y}`;
-  }
-
-  return d;
-}
-
-/* Consecutive runs of night hours, as [startIndex, endIndex]. */
-function getNightRuns(hourly: HourlyPoint[]) {
-  const runs: [number, number][] = [];
-
-  hourly.forEach((point, i) => {
-    if (!point.night) return;
-
-    const last = runs[runs.length - 1];
-    if (last && last[1] === i - 1) {
-      last[1] = i;
-    } else {
-      runs.push([i, i]);
-    }
-  });
-
-  return runs;
-}
 
 function shortHour(hour: string) {
   return hour.slice(0, 2);
@@ -367,36 +312,13 @@ export default function HourlyScoreChart({
             )}
 
             {active && activeIndex !== null && (
-              <div
-                className="pointer-events-none absolute z-10 w-44 rounded-2xl bg-[var(--ink)] p-3 text-white shadow-xl shadow-slate-900/20"
-                style={{
-                  left: Math.min(Math.max(x(activeIndex), 88), width - 88),
-                  top: y(active.score),
-                  transform:
-                    y(active.score) < HEIGHT / 2
-                      ? "translate(-50%, 18px)"
-                      : "translate(-50%, calc(-100% - 18px))",
-                }}
-              >
-                <div className="flex items-center justify-between text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
-                  <span>{activeIndex === 0 ? "Nå" : `Kl. ${active.hour}`}</span>
-                  <span className="text-base">
-                    {getWeatherEmoji(active.symbol, active.night)}
-                  </span>
-                </div>
-                <p className="text-3xl font-black tracking-[-0.05em] tabular-nums">
-                  {active.score}
-                  <span className="ml-0.5 text-lg text-[var(--mint)]">%</span>
-                </p>
-                <p className="text-xs text-slate-300">
-                  {getVerdict(active.score).emoji}{" "}
-                  {getConditionLabel(active.symbol)}
-                </p>
-                <p className="mt-1.5 text-xs tabular-nums text-slate-300">
-                  {Math.round(active.temperature)}°C · {Math.round(active.wind)}{" "}
-                  m/s · {active.precipitation} mm
-                </p>
-              </div>
+              <HourlyTooltip
+                point={active}
+                isNow={activeIndex === 0}
+                left={Math.min(Math.max(x(activeIndex), 88), width - 88)}
+                top={y(active.score)}
+                below={y(active.score) < HEIGHT / 2}
+              />
             )}
           </div>
 

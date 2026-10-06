@@ -6,8 +6,8 @@ import {
   calculatePrecipitation,
   calculateTemperature,
   calculateWind,
-  getConditionLabel,
 } from "@/lib/calculations";
+import { getConditionLabel } from "@/lib/conditions";
 
 interface ScoreFactorsProps {
   score: number;

@@ -1,7 +1,5 @@
-import {
-  calculateUtepilsScore,
-  mapSymbolToCondition,
-} from "@/lib/calculations";
+import { calculateUtepilsScore } from "@/lib/calculations";
+import { mapSymbolToCondition } from "@/lib/conditions";
 import { TIMEZONE } from "@/lib/time";
 import type { ForecastPoint } from "@/types/weather";
 
