@@ -24,14 +24,17 @@ export type ForecastEntry = {
         wind_speed?: number;
       };
     };
-    next_1_hours?: {
-      details?: {
-        precipitation_amount?: number;
-      };
-      summary?: {
-        symbol_code?: string;
-      };
-    };
+    next_1_hours?: ForecastPeriod;
+    next_6_hours?: ForecastPeriod;
+  };
+};
+
+export type ForecastPeriod = {
+  details?: {
+    precipitation_amount?: number;
+  };
+  summary?: {
+    symbol_code?: string;
   };
 };
 
