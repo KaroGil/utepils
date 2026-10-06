@@ -4,18 +4,14 @@ import { useEffect, useState } from "react";
 import InfoCard from "../components/InfoCard";
 import ReasonRow from "../components/ReasonRow";
 import { BergenResponse, WeatherData } from "@/types/weather";
-import {
-  getBackgroundClass,
-  getMeterColor,
-  getConditionLabel,
-} from "../../lib/calculations";
+import { getMeterColor } from "../../lib/calculations";
+import { getConditionLabel } from "@/lib/conditions";
 import Forecast from "../components/forcast";
 import LoadingScreen from "../components/LoadingScreen";
 import NorwegianFlagsBackground from "../components/norwegianFlags";
 import { isSeventeenthOfMay } from "@/lib/time";
 import { cities } from "@/lib/cities";
-
-type LocationMode = "bergen" | "oslo" | "local";
+import { LocationMode, locationLabels, locationModes } from "@/lib/locations";
 
 export default function Page() {
   const now = new Date();
@@ -115,11 +111,6 @@ export default function Page() {
     fetchData();
   }, [locationMode, coords]);
 
-  const locationLabel =
-    locationMode === "local" ? "Local" : cities[locationMode].name;
-
-  const backgroundClass = getBackgroundClass(activeData?.score ?? 0);
-
   const meterColor = getMeterColor(activeData?.score ?? 0);
   const conditionLabel = getConditionLabel(weather.symbol);
 
@@ -128,9 +119,7 @@ export default function Page() {
   }
 
   return (
-    <main
-      className={`min-h-screen bg-linear-to-br ${backgroundClass} text-slate-900`}
-    >
+    <main className="min-h-screen bg-[var(--background)] text-slate-900">
       {isSeventeenthOfMay(new Date().toISOString()) && (
         <NorwegianFlagsBackground />
       )}
@@ -160,9 +149,11 @@ export default function Page() {
           }}
           className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-300"
         >
-          <option value="bergen">Bergen</option>
-          <option value="oslo">Oslo</option>
-          <option value="local">Min posisjon</option>
+          {locationModes.map((mode) => (
+            <option key={mode} value={mode}>
+              {locationLabels[mode]}
+            </option>
+          ))}
         </select>
       </div>
 
