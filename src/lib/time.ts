@@ -7,6 +7,18 @@ export function getOsloDayKey(date: Date): string {
   });
 }
 
+/*
+ * Oslo day keys (YYYY-MM-DD) for today and the following days. Steps by
+ * calendar day, not 24 hours, since DST days are 23 or 25 hours long.
+ */
+export function getNextOsloDayKeys(days: number, from = new Date()): string[] {
+  const [year, month, day] = getOsloDayKey(from).split("-").map(Number);
+
+  return Array.from({ length: days }, (_, i) =>
+    new Date(Date.UTC(year, month - 1, day + i)).toISOString().slice(0, 10),
+  );
+}
+
 export function getOsloHour(date: Date): number {
   return Number(
     date.toLocaleTimeString("en-GB", {

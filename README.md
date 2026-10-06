@@ -1,19 +1,20 @@
 # 🍻 Utepils Meter
 
-Måler stemningen for utepils basert på vært og tidspunkt på dagen 😎🍻
+Måler stemningen for utepils basert på vær og tidspunkt på dagen 😎🍻
 
 Bygget med **Next.js**, data fra **MET Norway weather data**, med et eget poengsystem.
 
 Hvordan kjører man dette?
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+
+Kjør testene:
+
+```bash
+npm test
 ```
 
 ## 📲 Gjør det om til en widget på mobilen
