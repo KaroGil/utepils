@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, RotateCw } from "lucide-react";
 import Forecast from "./components/forcast";
 import LoadingScreen from "./components/LoadingScreen";
 import Footer from "./components/Footer";
@@ -40,6 +40,15 @@ export default function Page() {
 
   const [showForecast, setShowForecast] = useState(false);
 
+  const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [locationNotice, setLocationNotice] = useState<string | null>(null);
+
+  function handleLocationChange(mode: LocationMode) {
+    setLocationNotice(null);
+    setLocationMode(mode);
+  }
+
   /*
    * Get the user's coordinates when "Min posisjon" is selected.
    */
@@ -50,6 +59,9 @@ export default function Page() {
 
     if (!navigator.geolocation) {
       console.error("Geolocation is not supported by this browser");
+      setLocationNotice(
+        "Nettleseren din støtter ikke posisjon – viser Bergen i stedet.",
+      );
       setLocationMode("bergen");
       return;
     }
@@ -65,6 +77,9 @@ export default function Page() {
         console.error("Geolocation error:", error);
 
         // Return to Bergen if the user denies location access.
+        setLocationNotice(
+          "Fikk ikke tilgang til posisjonen din – viser Bergen i stedet.",
+        );
         setLocationMode("bergen");
       },
     );
@@ -114,12 +129,17 @@ export default function Page() {
 
         setActiveData(data);
         setWeather(data.weather);
+        setError(null);
       } catch (error) {
         if (error instanceof Error && error.name === "AbortError") {
           return;
         }
 
         console.error(`Failed to load ${locationMode} data:`, error);
+
+        // Don't show the previous location's score as if it were this one.
+        setActiveData(null);
+        setError("Klarte ikke å hente værdata akkurat nå.");
       } finally {
         if (!controller.signal.aborted) {
           setIsLoading(false);
@@ -132,7 +152,7 @@ export default function Page() {
     return () => {
       controller.abort();
     };
-  }, [locationMode, coords]);
+  }, [locationMode, coords, reloadKey]);
 
   return (
     <main className="min-h-screen overflow-hidden px-4 py-3 text-slate-900 sm:px-8 sm:py-5">
@@ -151,7 +171,10 @@ export default function Page() {
           </div>
 
           <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:gap-2">
-            <LocationSelector value={locationMode} onChange={setLocationMode} />
+            <LocationSelector
+              value={locationMode}
+              onChange={handleLocationChange}
+            />
             <button
               type="button"
               onClick={() => setShowForecast((previous) => !previous)}
@@ -164,6 +187,15 @@ export default function Page() {
           </div>
         </header>
 
+        {locationNotice && (
+          <p
+            role="status"
+            className="mb-4 text-sm font-semibold text-slate-600 dark:text-slate-300"
+          >
+            📍 {locationNotice}
+          </p>
+        )}
+
         {showForecast && (
           <div className="animate-rise-in border-b border-slate-300/50 pb-8 pt-4">
             <Forecast locationMode={locationMode} coords={coords} />
@@ -172,6 +204,23 @@ export default function Page() {
 
         {isLoading ? (
           <LoadingScreen />
+        ) : error ? (
+          <div role="alert" className="animate-rise-in pb-12 pt-4 sm:pt-8">
+            <h1 className="text-2xl font-black tracking-[-0.04em] text-[var(--ink)]">
+              Oi, her ble det tørt 🍺🤷
+            </h1>
+            <p className="mt-2 text-slate-600 dark:text-slate-300">
+              {error} Prøv igjen om litt.
+            </p>
+            <button
+              type="button"
+              onClick={() => setReloadKey((key) => key + 1)}
+              className="mt-6 inline-flex items-center justify-center gap-2 rounded-full border border-slate-300/80 bg-white/70 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-400 hover:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--coral)]"
+            >
+              <RotateCw size={16} />
+              Prøv igjen
+            </button>
+          </div>
         ) : (
           <div className="pb-12">
             <div className="animate-rise-in pt-4 sm:pt-8">

@@ -30,3 +30,19 @@ export async function fetchSunTimes(
 
   return { sunrise, sunset };
 }
+
+/*
+ * Sun times for several days, keyed by day. A failed day is null so the
+ * score falls back to default daylight hours instead of failing the request.
+ */
+export async function fetchSunTimesForDays(
+  lat: number,
+  lon: number,
+  dayKeys: string[],
+): Promise<Record<string, SunTimes | null>> {
+  const results = await Promise.all(
+    dayKeys.map((day) => fetchSunTimes(lat, lon, day).catch(() => null)),
+  );
+
+  return Object.fromEntries(dayKeys.map((day, i) => [day, results[i]]));
+}

@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { WeatherData } from "../types/weather";
 
 async function getCity(lat: number, lon: number): Promise<string> {
@@ -34,10 +33,7 @@ export async function fetchWeatherTimeseries(lat: number, lon: number) {
   );
 
   if (!res.ok) {
-    return NextResponse.json(
-      { error: "Could not fetch weather data" },
-      { status: 502 },
-    );
+    throw new Error(`MET request failed: ${res.status}`);
   }
 
   const data = await res.json();
