@@ -7,6 +7,13 @@ export function getOsloDayKey(date: Date): string {
   });
 }
 
+/* Oslo day keys (YYYY-MM-DD) for today and the following days. */
+export function getNextOsloDayKeys(days: number, from = new Date()): string[] {
+  return Array.from({ length: days }, (_, i) =>
+    getOsloDayKey(new Date(from.getTime() + i * 24 * 60 * 60 * 1000)),
+  );
+}
+
 export function getOsloHour(date: Date): number {
   return Number(
     date.toLocaleTimeString("en-GB", {

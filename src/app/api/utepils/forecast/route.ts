@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { buildDailyForecast } from "@/lib/forecast";
 import { isValidLatitude, isValidLongitude } from "@/lib/coords";
+import { fetchSunTimesForDays } from "@/lib/sun";
+import { getNextOsloDayKeys, TIMEZONE } from "@/lib/time";
 
 export async function GET(req: NextRequest) {
   try {
@@ -13,16 +15,19 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Invalid lat/lon" }, { status: 400 });
     }
 
-    const res = await fetch(
-      `https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat}&lon=${lon}`,
-      {
-        headers: {
-          "User-Agent": "utepils-meter/1.0",
-          Accept: "application/json",
+    const [res, sunTimes] = await Promise.all([
+      fetch(
+        `https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=${lat}&lon=${lon}`,
+        {
+          headers: {
+            "User-Agent": "utepils-meter/1.0",
+            Accept: "application/json",
+          },
+          cache: "no-store",
         },
-        cache: "no-store",
-      },
-    );
+      ),
+      fetchSunTimesForDays(lat, lon, getNextOsloDayKeys(7)),
+    ]);
 
     if (!res.ok) {
       return NextResponse.json(
@@ -32,7 +37,11 @@ export async function GET(req: NextRequest) {
     }
 
     const data = await res.json();
-    const predictions = buildDailyForecast(data?.properties?.timeseries ?? []);
+    const predictions = buildDailyForecast(
+      data?.properties?.timeseries ?? [],
+      TIMEZONE,
+      sunTimes,
+    );
 
     return NextResponse.json(
       {
