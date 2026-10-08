@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CalendarDays } from "lucide-react";
 import Forecast from "./components/forcast";
 import LoadingScreen from "./components/LoadingScreen";
@@ -14,7 +14,9 @@ import NorwegianFlagsBackground from "./components/norwegianFlags";
 import { BergenResponse, WeatherData } from "@/types/weather";
 import { getOsloHour, isSeventeenthOfMay } from "@/lib/time";
 import { cities } from "@/lib/cities";
-import { LocationMode } from "@/lib/locations";
+import { locationModes, LocationMode } from "@/lib/locations";
+
+const STORED_LOCATION_KEY = "utepils-meter-location";
 
 export default function Page() {
   const now = new Date();
@@ -22,6 +24,7 @@ export default function Page() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [locationMode, setLocationMode] = useState<LocationMode>("bergen");
+  const hasMountedLocationPersistence = useRef(false);
 
   const [activeData, setActiveData] = useState<BergenResponse | null>(null);
 
@@ -39,6 +42,26 @@ export default function Page() {
   });
 
   const [showForecast, setShowForecast] = useState(false);
+
+  useEffect(() => {
+    const storedLocation = window.localStorage.getItem(STORED_LOCATION_KEY);
+
+    if (
+      storedLocation &&
+      locationModes.includes(storedLocation as LocationMode)
+    ) {
+      setLocationMode(storedLocation as LocationMode);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!hasMountedLocationPersistence.current) {
+      hasMountedLocationPersistence.current = true;
+      return;
+    }
+
+    window.localStorage.setItem(STORED_LOCATION_KEY, locationMode);
+  }, [locationMode]);
 
   /*
    * Get the user's coordinates when "Min posisjon" is selected.
