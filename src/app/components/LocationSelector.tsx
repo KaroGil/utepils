@@ -6,12 +6,27 @@ import { LocationMode, locationLabels, locationModes } from "@/lib/locations";
 interface LocationSelectorProps {
   value: LocationMode;
   onChange: (value: LocationMode) => void;
+  isLoading: boolean;
 }
 
 export default function LocationSelector({
   value,
   onChange,
+  isLoading,
 }: LocationSelectorProps) {
+  if (isLoading) {
+    return (
+      <div
+        className="flex w-full animate-pulse flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-3"
+        role="status"
+        aria-label="Laster sted"
+      >
+        <span className="h-4 w-32 rounded-full bg-slate-300/60 dark:bg-white/10" />
+        <span className="h-10 w-full rounded-xl border border-slate-200/80 bg-slate-300/60 dark:border-white/10 dark:bg-white/10 sm:w-[260px]" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-3">
       <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">
@@ -35,9 +50,9 @@ export default function LocationSelector({
                   : "text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white"
               }`}
             >
-              {mode === "local" && (
+              {mode === "local" ? (
                 <Crosshair size={14} className="mr-1.5 shrink-0" />
-              )}
+              ) : null}
               {locationLabels[mode]}
             </button>
           );

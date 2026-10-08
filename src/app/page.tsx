@@ -63,6 +63,16 @@ export default function Page() {
     window.localStorage.setItem(STORED_LOCATION_KEY, locationMode);
   }, [locationMode]);
 
+  function handleLocationChange(nextLocation: LocationMode) {
+    if (nextLocation === locationMode) {
+      return;
+    }
+
+    setIsLoading(true);
+    setActiveData(null);
+    setLocationMode(nextLocation);
+  }
+
   /*
    * Get the user's coordinates when "Min posisjon" is selected.
    */
@@ -174,16 +184,28 @@ export default function Page() {
           </div>
 
           <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:gap-2">
-            <LocationSelector value={locationMode} onChange={setLocationMode} />
-            <button
-              type="button"
-              onClick={() => setShowForecast((previous) => !previous)}
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300/80 bg-white/70 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-400 hover:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--coral)]"
-              aria-expanded={showForecast}
-            >
-              <CalendarDays size={16} />
-              {showForecast ? "Skjul prognose" : "Se 7-dagers prognose"}
-            </button>
+            <LocationSelector
+              value={locationMode}
+              onChange={handleLocationChange}
+              isLoading={isLoading}
+            />
+            {isLoading ? (
+              <span
+                className="h-10 w-full animate-pulse rounded-full border border-slate-200/80 bg-slate-300/60 dark:border-white/10 dark:bg-white/10 sm:w-[200px]"
+                role="status"
+                aria-label="Laster prognoseknapp"
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowForecast((previous) => !previous)}
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300/80 bg-white/70 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-400 hover:bg-white focus:outline-none focus:ring-2 focus:ring-[var(--coral)]"
+                aria-expanded={showForecast}
+              >
+                <CalendarDays size={16} />
+                {showForecast ? "Skjul prognose" : "Se 7-dagers prognose"}
+              </button>
+            )}
           </div>
         </header>
 
