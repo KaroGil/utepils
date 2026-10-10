@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchWeatherNow } from "@/lib/weather";
-import { fetchSunTimes } from "@/lib/sun";
-import { fetchHourlyScores } from "@/lib/hourly";
-import { findPeakToday } from "@/lib/peak";
-import { calculateUtepilsScore, getVerdict } from "@/lib/calculations";
-import { getOsloDayKey, getOsloHour } from "@/lib/time";
-import { isValidLatitude, isValidLongitude } from "@/lib/coords";
+import { getUtepilsData } from "@/lib/utepils";
+import {
+  isValidLatitude,
+  isValidLongitude,
+  roundCoord,
+} from "@/lib/coords";
 
 export async function GET(req: NextRequest) {
   try {
@@ -18,44 +17,17 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Invalid lat/lon" }, { status: 400 });
     }
 
-    const now = new Date();
-    const todayDate = getOsloDayKey(now);
-    const currentHour = getOsloHour(now);
+    const data = await getUtepilsData({
+      lat: roundCoord(lat),
+      lon: roundCoord(lon),
+    });
 
-    const [weather, sun, hourly] = await Promise.all([
-      fetchWeatherNow(lat, lon),
-      fetchSunTimes(lat, lon, todayDate),
-      fetchHourlyScores(lat, lon),
-    ]);
-
-    const score = calculateUtepilsScore(
-      weather.temperature,
-      weather.wind,
-      weather.symbol,
-      weather.precipitation ?? 0,
-      currentHour,
-      sun.sunset,
-      now.toISOString(),
-      sun.sunrise,
-    );
-
-    return NextResponse.json(
-      {
-        city: weather.city,
-        score,
-        verdict: getVerdict(score),
-        weather,
-        sun,
-        peakToday: findPeakToday(hourly),
-        hourly,
+    return NextResponse.json(data, {
+      status: 200,
+      headers: {
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
       },
-      {
-        status: 200,
-        headers: {
-          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
-        },
-      },
-    );
+    });
   } catch (error) {
     console.error("GET /api/utepils/current failed:", error);
 

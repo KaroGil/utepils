@@ -1,36 +1,20 @@
 import { calculateDaylight, calculateUtepilsScore } from "./calculations";
-import { fetchSunTimes, type SunTimes } from "./sun";
+import type { SunTimes } from "./sun";
 import { formatOsloTime, getOsloDayKey, getOsloHour } from "./time";
-import { fetchWeatherTimeseries } from "./weather";
 import type { ForecastEntry, HourlyPoint } from "@/types/weather";
 
 const HOUR_MS = 60 * 60 * 1000;
 
 /*
  * Score every hour from the current hour and `hours` ahead, using the same
- * formula as the "Akkurat nå" score.
+ * formula as the "Akkurat nå" score. `sunTimes` is keyed by Oslo day.
  */
-export async function fetchHourlyScores(
-  lat: number,
-  lon: number,
+export function buildHourlyScores(
+  timeseries: ForecastEntry[],
+  sunTimes: Record<string, SunTimes | null>,
   hours = 24,
-): Promise<HourlyPoint[]> {
+): HourlyPoint[] {
   const now = new Date();
-  const todayKey = getOsloDayKey(now);
-  const tomorrowKey = getOsloDayKey(new Date(now.getTime() + 24 * HOUR_MS));
-
-  const [data, sunToday, sunTomorrow] = await Promise.all([
-    fetchWeatherTimeseries(lat, lon),
-    fetchSunTimes(lat, lon, todayKey).catch(() => null),
-    fetchSunTimes(lat, lon, tomorrowKey).catch(() => null),
-  ]);
-
-  const sunTimes: Record<string, SunTimes | null> = {
-    [todayKey]: sunToday,
-    [tomorrowKey]: sunTomorrow,
-  };
-
-  const timeseries: ForecastEntry[] = data?.properties?.timeseries ?? [];
   const points: HourlyPoint[] = [];
 
   for (const entry of timeseries) {

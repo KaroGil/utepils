@@ -10,8 +10,9 @@ export async function fetchSunTimes(
 ): Promise<SunTimes> {
   const url = `https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lon}&date=${date}&formatted=0`;
 
+  // Sun times for a given date never change.
   const res = await fetch(url, {
-    cache: "no-store",
+    next: { revalidate: 86400 },
   });
 
   if (!res.ok) {
@@ -29,4 +30,20 @@ export async function fetchSunTimes(
   }
 
   return { sunrise, sunset };
+}
+
+/*
+ * Sun times for several days, keyed by day. A failed day is null so the
+ * score falls back to default daylight hours instead of failing the request.
+ */
+export async function fetchSunTimesForDays(
+  lat: number,
+  lon: number,
+  dayKeys: string[],
+): Promise<Record<string, SunTimes | null>> {
+  const results = await Promise.all(
+    dayKeys.map((day) => fetchSunTimes(lat, lon, day).catch(() => null)),
+  );
+
+  return Object.fromEntries(dayKeys.map((day, i) => [day, results[i]]));
 }

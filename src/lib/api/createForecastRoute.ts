@@ -1,37 +1,22 @@
 import { NextResponse } from "next/server";
 import { buildDailyForecast } from "@/lib/forecast";
+import { fetchSunTimesForDays } from "@/lib/sun";
+import { getNextOsloDayKeys } from "@/lib/time";
+import { fetchWeatherTimeseries } from "@/lib/weather";
 import type { CityConfig } from "@/lib/cities";
 
 export function createForecastRoute(city: CityConfig) {
   return async function GET() {
     try {
-      const params = new URLSearchParams({
-        lat: String(city.lat),
-        lon: String(city.lon),
-      });
+      const [timeseries, sunTimes] = await Promise.all([
+        fetchWeatherTimeseries(city.lat, city.lon),
+        fetchSunTimesForDays(city.lat, city.lon, getNextOsloDayKeys(7)),
+      ]);
 
-      const res = await fetch(
-        `https://api.met.no/weatherapi/locationforecast/2.0/compact?${params}`,
-        {
-          headers: {
-            "User-Agent": "utepils-meter/1.0",
-            Accept: "application/json",
-          },
-          cache: "no-store",
-        },
-      );
-
-      if (!res.ok) {
-        return NextResponse.json(
-          { error: "Could not fetch forecast data" },
-          { status: 502 },
-        );
-      }
-
-      const data = await res.json();
       const predictions = buildDailyForecast(
-        data?.properties?.timeseries ?? [],
+        timeseries,
         city.timeZone,
+        sunTimes,
       );
 
       return NextResponse.json(

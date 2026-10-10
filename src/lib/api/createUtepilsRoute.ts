@@ -1,52 +1,21 @@
 import { NextResponse } from "next/server";
-import { fetchSunTimes } from "@/lib/sun";
-import { calculateUtepilsScore, getVerdict } from "@/lib/calculations";
-import { getOsloDayKey, getOsloHour } from "@/lib/time";
-import { fetchWeatherNow } from "@/lib/weather";
-import { fetchHourlyScores } from "@/lib/hourly";
-import { findPeakToday } from "@/lib/peak";
+import { getUtepilsData } from "@/lib/utepils";
 import type { CityConfig } from "@/lib/cities";
 
 export function createUtepilsRoute(city: CityConfig) {
   return async function GET() {
     try {
-      const now = new Date();
-      const todayDate = getOsloDayKey(now);
-      const currentHour = getOsloHour(now);
+      const data = await getUtepilsData({
+        lat: city.lat,
+        lon: city.lon,
+        name: city.name,
+      });
 
-      const [sun, weather, hourly] = await Promise.all([
-        fetchSunTimes(city.lat, city.lon, todayDate),
-        fetchWeatherNow(city.lat, city.lon),
-        fetchHourlyScores(city.lat, city.lon),
-      ]);
-
-      const score = calculateUtepilsScore(
-        weather.temperature,
-        weather.wind,
-        weather.symbol,
-        weather.precipitation ?? 0,
-        currentHour,
-        sun.sunset,
-        now.toISOString(),
-        sun.sunrise,
-      );
-
-      return NextResponse.json(
-        {
-          city: city.name,
-          score,
-          verdict: getVerdict(score),
-          weather,
-          sun,
-          peakToday: findPeakToday(hourly),
-          hourly,
+      return NextResponse.json(data, {
+        headers: {
+          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
         },
-        {
-          headers: {
-            "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
-          },
-        },
-      );
+      });
     } catch (error) {
       console.error(`GET /api/utepils/${city.slug} failed:`, error);
 

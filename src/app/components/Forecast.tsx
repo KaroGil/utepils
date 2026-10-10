@@ -30,6 +30,7 @@ const locationNames: Record<LocationMode, string> = {
 export default function Forecast({ locationMode, coords }: ForecastProps) {
   const [forecast, setForecast] = useState<ForecastPoint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     if (locationMode === "local" && !coords) {
@@ -59,11 +60,13 @@ export default function Forecast({ locationMode, coords }: ForecastProps) {
 
         const data = await res.json();
         setForecast(data.predictions ?? []);
+        setHasError(false);
       } catch (error) {
         if (error instanceof Error && error.name === "AbortError") return;
 
         console.error(`Could not load ${locationMode} forecast`, error);
         setForecast([]);
+        setHasError(true);
       } finally {
         if (!controller.signal.aborted) {
           setIsLoading(false);
@@ -92,6 +95,10 @@ export default function Forecast({ locationMode, coords }: ForecastProps) {
       {isLoading ? (
         <p className="mt-6 text-sm font-semibold text-slate-500">
           Henter værbildet…
+        </p>
+      ) : hasError ? (
+        <p role="alert" className="mt-6 text-sm font-semibold text-slate-500">
+          Klarte ikke å hente prognosen akkurat nå 🤷
         </p>
       ) : (
         <>
