@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+// @ts-expect-error CSS side-effect imports are handled by Next.js.
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,8 +14,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Utepils-meter",
+  title: "Utepils score",
   description: "Sjekk om været er bra nok for utepils i dag! 🍻",
+  icons: {
+    icon: "/icon.png",
+  },
 };
 
 export default function RootLayout({
