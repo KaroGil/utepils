@@ -13,8 +13,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Utepils-meter",
+  title: "Utepils score",
   description: "Sjekk om været er bra nok for utepils i dag! 🍻",
+  icons: {
+    icon: "/icon.png",
+  },
 };
 
 export default function RootLayout({
